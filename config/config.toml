@@ -1,0 +1,11 @@
+logpath=""
+[watchdog]
+	step=1000 		#цикл watchdog
+[setBrams]
+	dbpath="db/"
+	step=1
+[hardware]
+	step=100		#цикл опроса датчиков миллисекунд
+[netware]
+	port=8080       ## порт откуда ждем настройки
+[rtc]
