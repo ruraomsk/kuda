@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/ruraomsk/kuda/setup"
+	"github.com/ruraomsk/kuda/status"
 )
 
 func mainLoop(stop chan interface{}) {
@@ -20,5 +21,6 @@ func mainLoop(stop chan interface{}) {
 
 func StartHard(stop chan interface{}) {
 	go mainLoop(stop)
+	status.HardMessage("Запущено оборудование")
 	WatchDogStart()
 }

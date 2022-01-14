@@ -21,7 +21,7 @@ func saveDBs() {
 }
 
 func workerDBFs(stop chan interface{}) {
-	ticker := time.NewTicker(time.Duration(sbrams.Step * int(time.Second)))
+	ticker := time.NewTicker(time.Duration(sbrams.Step) * time.Second)
 	for {
 		select {
 		case <-ticker.C:

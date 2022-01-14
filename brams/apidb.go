@@ -133,22 +133,24 @@ func CreateDb(name string, defkeys ...string) error {
 	db.values = make(map[string]Value)
 	db.UID = 0
 	db.fs = true
-	fname := path + name + ext
-	os.Remove(fname)
-	// _, err := os.Stat(fname)
-	// if err == nil {
-	// 	return fmt.Errorf("db file %s is exist the path %s", name, path)
-	// }
-	buf, err := json.Marshal(&db)
-	if err != nil {
-		return err
-	}
-	err = ioutil.WriteFile(fname, buf, os.FileMode(0644))
-	if err != nil {
-		return err
-	}
-	os.Remove(path + name + extData)
+	db.update = true
 	dbs.dbs[name] = db
+	db.saveToFile()
+	// fname := path + name + ext
+	// os.Remove(fname)
+	// // _, err := os.Stat(fname)
+	// // if err == nil {
+	// // 	return fmt.Errorf("db file %s is exist the path %s", name, path)
+	// // }
+	// buf, err := json.Marshal(&db)
+	// if err != nil {
+	// 	return err
+	// }
+	// err = ioutil.WriteFile(fname, buf, os.FileMode(0644))
+	// if err != nil {
+	// 	return err
+	// }
+	// os.Remove(path + name + extData)
 	return nil
 }
 func CreateDbInMemory(name string, defkeys ...string) error {
@@ -173,6 +175,11 @@ func CreateDbInMemory(name string, defkeys ...string) error {
 	dbs.dbs[name] = db
 	return nil
 }
+func (db *Db) WriteJSON(value interface{}) error {
+	buf, _ := json.Marshal(value)
+	return db.WriteRecord(buf)
+}
+
 func (db *Db) WriteRecord(value []byte) error {
 	if !work {
 		return ErrStopped

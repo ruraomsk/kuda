@@ -15,6 +15,7 @@ import (
 	"github.com/ruraomsk/kuda/hard"
 	"github.com/ruraomsk/kuda/netware"
 	"github.com/ruraomsk/kuda/setup"
+	"github.com/ruraomsk/kuda/status"
 	"github.com/ruraomsk/kuda/usb"
 )
 
@@ -45,6 +46,11 @@ func main() {
 	hardstop := make(chan interface{})
 
 	brams.StartBrams(dbstop)
+
+	if err := status.StartStatus(); err != nil {
+		logger.Error.Printf("Подсистема status %s", err.Error())
+		return
+	}
 	hard.StartHard(hardstop)
 	netware.StartNetware()
 	usb.StartUSB()
@@ -53,10 +59,6 @@ func main() {
 	signal.Notify(c, os.Interrupt)
 	fmt.Println("kuda start")
 	logger.Info.Println("kuda start")
-	list := brams.GetListDBNames()
-	if len(list) == 0 {
-		logger.Error.Println("База данных пуста нет настроек")
-	}
 	watch := time.NewTicker(time.Duration(setup.Set.WatchDog.Step) * time.Millisecond)
 	for {
 		select {
