@@ -63,6 +63,7 @@ func mainLoop() {
 		select {
 		case mess := <-Messages:
 			name, ok := names[mess.Type]
+			
 			if !ok {
 				logger.Error.Printf("Нет такого типа %v", mess)
 				continue

@@ -207,7 +207,6 @@ func (db *Db) makeListKeys(limit int, keys []interface{}) ([]string, error) {
 			if bytes.Equal(key[i], vv.Bytes()) {
 				found++
 			}
-
 		}
 		if (found == count) && limit > 0 {
 			full, err := db.makeFullKeyOnValue(val.Value)
@@ -219,7 +218,5 @@ func (db *Db) makeListKeys(limit int, keys []interface{}) ([]string, error) {
 		}
 
 	}
-
 	return result, nil
-
 }

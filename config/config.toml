@@ -1,4 +1,4 @@
-logpath=""
+logpath="log/"
 [watchdog]
 	step=1000 		#цикл watchdog
 [setBrams]

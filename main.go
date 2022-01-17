@@ -31,14 +31,14 @@ func init() {
 		os.Exit(-1)
 		return
 	}
-	os.MkdirAll(setup.Set.LogPath+"log", 0777)
+	os.MkdirAll(setup.Set.LogPath, 0777)
 	os.MkdirAll(setup.Set.SetupBrams.DbPath, 0777)
 }
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	if err := logger.Init(setup.Set.LogPath + "log"); err != nil {
+	if err := logger.Init(setup.Set.LogPath); err != nil {
 		log.Panic("Error logger system", err.Error())
 		return
 	}
