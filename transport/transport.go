@@ -2,6 +2,7 @@ package transport
 
 import (
 	"bufio"
+	"encoding/base64"
 	"encoding/json"
 	"net"
 	"time"
@@ -13,12 +14,12 @@ type Message struct {
 	Messages map[string][]byte `json:"messages"`
 }
 
-var secretCode []byte
+var key []byte
 var emptyMessage = Message{}
 
-func ConnectWithServer(adress string) (net.Conn, error) {
+func ConnectWithServer(serverIP string) (net.Conn, error) {
 
-	socket, err := net.Dial("tcp", adress)
+	socket, err := net.Dial("tcp", serverIP)
 	if err != nil {
 		return nil, err
 	}
@@ -33,13 +34,19 @@ func ConnectWithServer(adress string) (net.Conn, error) {
 		socket.Close()
 		return nil, err
 	}
-	message, err := reader.ReadBytes('\n')
+	message, err := reader.ReadString('\n')
 	if err != nil {
-		logger.Error.Printf("Чтение сообщения от %s %s", socket.RemoteAddr(), err.Error())
+		logger.Error.Printf("Чтение ключа от %s %s", socket.RemoteAddr(), err.Error())
 		socket.Close()
 		return nil, err
 	}
-	secretCode = message
+	key, err = base64.StdEncoding.DecodeString(message)
+	if err != nil {
+		logger.Error.Printf("Чтение ключа от %s %s", socket.RemoteAddr(), err.Error())
+		socket.Close()
+		return nil, err
+
+	}
 	return socket, nil
 }
 
@@ -49,20 +56,20 @@ func GetMessageFromServer(socket net.Conn, inchan chan Message, toutin *time.Dur
 	reader := bufio.NewReader(socket)
 	for {
 		socket.SetReadDeadline(time.Now().Add(*toutin))
-		message, err := reader.ReadBytes('\n')
+		message, err := reader.ReadString('\n')
 		if err != nil {
 			logger.Error.Printf("Чтение сообщения от %s %s", socket.RemoteAddr(), err.Error())
 			inchan <- emptyMessage
 			return
 		}
-		message, err = decode(message)
+		mess, err := decode(message)
 		if err != nil {
 			logger.Error.Printf("Декодирование сообщения от %s %s", socket.RemoteAddr(), err.Error())
 			inchan <- emptyMessage
 			return
 		}
 		var inm Message
-		err = json.Unmarshal(message, &inm)
+		err = json.Unmarshal(mess, &inm)
 		if err != nil {
 			logger.Error.Printf("Unmarshal  сообщения %v %s", message, err.Error())
 			inchan <- emptyMessage
@@ -84,12 +91,12 @@ func SendMessageToServer(socket net.Conn, outchan chan Message, toutsend *time.D
 			return
 		}
 		socket.SetWriteDeadline(time.Now().Add(*toutsend))
-		buffer, err = code(buffer)
+		str, err := code(buffer)
 		if err != nil {
 			logger.Error.Printf("Кодирование сообщения %v %s", buffer, err.Error())
 			return
 		}
-		_, _ = writer.WriteString(string(buffer))
+		_, _ = writer.WriteString(str)
 		_, _ = writer.WriteString("\n")
 		err = writer.Flush()
 		if err != nil {
