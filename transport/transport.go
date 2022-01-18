@@ -50,21 +50,21 @@ func ConnectWithServer(serverIP string) (net.Conn, error) {
 	return socket, nil
 }
 
-func GetMessageFromServer(socket net.Conn, inchan chan Message, toutin *time.Duration) {
+func GetMessageFromServer(socket net.Conn, inchan chan Message, toutin time.Duration) {
 	defer socket.Close()
 	defer close(inchan)
 	reader := bufio.NewReader(socket)
 	for {
-		socket.SetReadDeadline(time.Now().Add(*toutin))
+		socket.SetReadDeadline(time.Now().Add(toutin))
 		message, err := reader.ReadString('\n')
 		if err != nil {
-			logger.Error.Printf("Чтение сообщения от %s %s", socket.RemoteAddr(), err.Error())
+			logger.Error.Printf("Чтение сообщения от %s %s", socket.RemoteAddr().String(), err.Error())
 			inchan <- emptyMessage
 			return
 		}
 		mess, err := decode(message)
 		if err != nil {
-			logger.Error.Printf("Декодирование сообщения от %s %s", socket.RemoteAddr(), err.Error())
+			logger.Error.Printf("Декодирование сообщения от %s %s", socket.RemoteAddr().String(), err.Error())
 			inchan <- emptyMessage
 			return
 		}
@@ -79,7 +79,7 @@ func GetMessageFromServer(socket net.Conn, inchan chan Message, toutin *time.Dur
 	}
 }
 
-func SendMessageToServer(socket net.Conn, outchan chan Message, toutsend *time.Duration) {
+func SendMessageToServer(socket net.Conn, outchan chan Message, toutsend time.Duration) {
 	defer socket.Close()
 	defer close(outchan)
 	writer := bufio.NewWriter(socket)
@@ -90,7 +90,7 @@ func SendMessageToServer(socket net.Conn, outchan chan Message, toutsend *time.D
 			logger.Error.Printf("Marshal  сообщения %v %s", message, err.Error())
 			return
 		}
-		socket.SetWriteDeadline(time.Now().Add(*toutsend))
+		socket.SetWriteDeadline(time.Now().Add(toutsend))
 		str, err := code(buffer)
 		if err != nil {
 			logger.Error.Printf("Кодирование сообщения %v %s", buffer, err.Error())
@@ -100,7 +100,7 @@ func SendMessageToServer(socket net.Conn, outchan chan Message, toutsend *time.D
 		_, _ = writer.WriteString("\n")
 		err = writer.Flush()
 		if err != nil {
-			logger.Error.Printf("Передача сообщения для %s %s", socket.RemoteAddr(), err.Error())
+			logger.Error.Printf("Передача сообщения для %s %s", socket.RemoteAddr().String(), err.Error())
 			return
 		}
 	}

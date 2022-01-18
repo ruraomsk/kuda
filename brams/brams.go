@@ -28,6 +28,7 @@ var (
 	extData            = ".dat"
 	sbrams             setup.SetupBrams
 	work               bool
+	oneKey             = "oneKey"
 )
 
 const (
@@ -62,6 +63,9 @@ func (db *Db) Close() {
 }
 func (db *Db) makeFullKey(keys []interface{}) (string, error) {
 	var err error
+	if len(keys) == 0 {
+		return oneKey, nil
+	}
 	full := new(bytes.Buffer)
 	for _, v := range keys {
 		switch vt := v.(type) {
@@ -80,6 +84,9 @@ func (db *Db) makeFullKey(keys []interface{}) (string, error) {
 	return full.String(), nil
 }
 func (db *Db) makeFullKeyOnValue(value []byte) (string, error) {
+	if len(db.Defkey) == 0 {
+		return oneKey, nil
+	}
 	m := make(map[string]interface{})
 	err := json.Unmarshal(value, &m)
 	if err != nil {
@@ -147,6 +154,9 @@ func (db *Db) saveToFile() error {
 func (db *Db) makeListKeys(limit int, keys []interface{}) ([]string, error) {
 	if limit == 0 {
 		limit = math.MaxInt64
+	}
+	if len(db.Defkey) == 0 {
+		return make([]string, 0), nil
 	}
 	var err error
 	m := make(map[string]interface{})

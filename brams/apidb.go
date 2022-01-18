@@ -162,13 +162,12 @@ func CreateDbInMemory(name string, defkeys ...string) error {
 	if _, ok := dbs.dbs[name]; ok {
 		return fmt.Errorf("db %s is exist ", name)
 	}
-	if len(defkeys) == 0 {
-		return ErrWrongParameters
-	}
 	db := new(Db)
 	db.Name = name
 	db.Defkey = make([]string, 0)
-	db.Defkey = append(db.Defkey, defkeys...)
+	if len(defkeys) != 0 {
+		db.Defkey = append(db.Defkey, defkeys...)
+	}
 	db.values = make(map[string]Value)
 	db.fs = false
 	db.UID = 0
@@ -261,6 +260,19 @@ func (db *Db) ReadListKeys(limit int, keys ...interface{}) ([]string, error) {
 	return db.makeListKeys(limit, keys)
 
 }
+func (db *Db) ReadOneRecord() ([]byte, error) {
+	if !work {
+		return make([]byte, 0), ErrStopped
+	}
+	db.RWMutex.RLock()
+	defer db.RWMutex.RUnlock()
+	value, is := db.values[oneKey]
+	if !is {
+		return make([]byte, 0), ErrKeyNotFound
+	}
+	return value.Value, nil
+}
+
 func (db *Db) ReadRecordFromList(key string) ([]byte, error) {
 	if !work {
 		return make([]byte, 0), ErrStopped
