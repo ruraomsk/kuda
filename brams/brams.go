@@ -10,7 +10,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/ruraomsk/TLServer/logger"
+	"github.com/ruraomsk/ag-server/logger"
 	"github.com/ruraomsk/kuda/setup"
 )
 

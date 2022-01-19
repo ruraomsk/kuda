@@ -3,7 +3,7 @@ package usb
 import (
 	"time"
 
-	"github.com/ruraomsk/TLServer/logger"
+	"github.com/ruraomsk/ag-server/logger"
 )
 
 func mainLoop() {

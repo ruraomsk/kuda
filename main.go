@@ -10,12 +10,13 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
-	"github.com/ruraomsk/TLServer/logger"
+	"github.com/ruraomsk/ag-server/logger"
 	"github.com/ruraomsk/kuda/brams"
 	"github.com/ruraomsk/kuda/hard"
 	"github.com/ruraomsk/kuda/netware"
 	"github.com/ruraomsk/kuda/setup"
 	"github.com/ruraomsk/kuda/status"
+	"github.com/ruraomsk/kuda/transport"
 	"github.com/ruraomsk/kuda/usb"
 )
 
@@ -54,7 +55,7 @@ func main() {
 	hard.StartHard(hardstop)
 	netware.StartNetware()
 	usb.StartUSB()
-
+	go transport.StartServerExchange("127.0.0.1:2018")
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	fmt.Println("kuda start")

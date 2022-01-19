@@ -4,10 +4,14 @@ import (
 	"bufio"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net"
+	"strings"
 	"time"
 
-	"github.com/ruraomsk/TLServer/logger"
+	"github.com/ruraomsk/ag-server/logger"
+	"github.com/ruraomsk/ag-server/pudge"
+	"github.com/ruraomsk/kuda/brams"
 )
 
 type Message struct {
@@ -17,7 +21,7 @@ type Message struct {
 var key []byte
 var emptyMessage = Message{}
 
-func ConnectWithServer(serverIP string) (net.Conn, error) {
+func ConnectWithServer(serverIP string, id int) (net.Conn, error) {
 
 	socket, err := net.Dial("tcp", serverIP)
 	if err != nil {
@@ -26,7 +30,7 @@ func ConnectWithServer(serverIP string) (net.Conn, error) {
 	reader := bufio.NewReader(socket)
 	writer := bufio.NewWriter(socket)
 	socket.SetDeadline(time.Now().Add(time.Second * 10))
-	writer.WriteString(messageConnect())
+	writer.WriteString(fmt.Sprintf("%d", id))
 	writer.WriteString("\n")
 	err = writer.Flush()
 	if err != nil {
@@ -40,6 +44,7 @@ func ConnectWithServer(serverIP string) (net.Conn, error) {
 		socket.Close()
 		return nil, err
 	}
+	message = strings.ReplaceAll(message, "\n", "")
 	key, err = base64.StdEncoding.DecodeString(message)
 	if err != nil {
 		logger.Error.Printf("Чтение ключа от %s %s", socket.RemoteAddr(), err.Error())
@@ -59,20 +64,20 @@ func GetMessageFromServer(socket net.Conn, inchan chan Message, toutin time.Dura
 		message, err := reader.ReadString('\n')
 		if err != nil {
 			logger.Error.Printf("Чтение сообщения от %s %s", socket.RemoteAddr().String(), err.Error())
-			inchan <- emptyMessage
 			return
 		}
+
+		addTraffic(0, len(message))
+		message = strings.ReplaceAll(message, "\n", "")
 		mess, err := decode(message)
 		if err != nil {
 			logger.Error.Printf("Декодирование сообщения от %s %s", socket.RemoteAddr().String(), err.Error())
-			inchan <- emptyMessage
 			return
 		}
 		var inm Message
 		err = json.Unmarshal(mess, &inm)
 		if err != nil {
 			logger.Error.Printf("Unmarshal  сообщения %v %s", message, err.Error())
-			inchan <- emptyMessage
 			return
 		}
 		inchan <- inm
@@ -96,12 +101,29 @@ func SendMessageToServer(socket net.Conn, outchan chan Message, toutsend time.Du
 			logger.Error.Printf("Кодирование сообщения %v %s", buffer, err.Error())
 			return
 		}
-		_, _ = writer.WriteString(str)
+		n, _ := writer.WriteString(str)
 		_, _ = writer.WriteString("\n")
 		err = writer.Flush()
 		if err != nil {
 			logger.Error.Printf("Передача сообщения для %s %s", socket.RemoteAddr().String(), err.Error())
 			return
 		}
+		addTraffic(n, 0)
 	}
+}
+func addTraffic(in, out int) {
+	var err error
+	var db *brams.Db
+	var tr = pudge.Traffic{}
+	db, err = brams.Open("traffic")
+	if err != nil {
+		brams.CreateDb("traffic")
+		db, _ = brams.Open("traffic")
+		db.WriteJSON(tr)
+	}
+	db.ReadJSON(&tr)
+	tr.LastFromDevice1Hour += uint64(out)
+	tr.LastToDevice1Hour += uint64(in)
+	db.WriteJSON(tr)
+	db.Close()
 }

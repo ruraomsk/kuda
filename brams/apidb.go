@@ -124,12 +124,13 @@ func CreateDb(name string, defkeys ...string) error {
 	if _, ok := dbs.dbs[name]; ok {
 		return fmt.Errorf("db %s is exist ", name)
 	}
-	if len(defkeys) == 0 {
-		return ErrWrongParameters
-	}
 	db := new(Db)
 	db.Name = name
-	db.Defkey = defkeys
+	if len(defkeys) != 0 {
+		db.Defkey = defkeys
+	} else {
+		db.Defkey = make([]string, 0)
+	}
 	db.values = make(map[string]Value)
 	db.UID = 0
 	db.fs = true
@@ -177,6 +178,14 @@ func CreateDbInMemory(name string, defkeys ...string) error {
 func (db *Db) WriteJSON(value interface{}) error {
 	buf, _ := json.Marshal(value)
 	return db.WriteRecord(buf)
+}
+func (db *Db) ReadJSON(value interface{}, keys ...interface{}) error {
+	buf, err := db.ReadRecord(keys...)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(buf, value)
+	return err
 }
 
 func (db *Db) WriteRecord(value []byte) error {

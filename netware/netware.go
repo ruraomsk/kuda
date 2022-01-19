@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/ruraomsk/TLServer/logger"
+	"github.com/ruraomsk/ag-server/logger"
 	"github.com/ruraomsk/kuda/setup"
 	"github.com/ruraomsk/kuda/status"
 )

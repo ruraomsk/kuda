@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"net"
 
-	"github.com/ruraomsk/TLServer/logger"
+	"github.com/ruraomsk/ag-server/logger"
 	"github.com/ruraomsk/kuda/commander"
 )
 

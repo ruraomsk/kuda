@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ruraomsk/TLServer/logger"
+	"github.com/ruraomsk/ag-server/logger"
 	"github.com/ruraomsk/kuda/brams"
 )
 
@@ -58,12 +58,12 @@ func appendMessage(name string, status Status) {
 	db.WriteJSON(b)
 }
 func mainLoop() {
-	tick := time.NewTicker(10 * time.Second)
+	// tick := time.NewTicker(10 * time.Second)
 	for {
 		select {
 		case mess := <-Messages:
 			name, ok := names[mess.Type]
-			
+
 			if !ok {
 				logger.Error.Printf("Нет такого типа %v", mess)
 				continue
@@ -91,13 +91,13 @@ func mainLoop() {
 				buffer.Statuses = make([]Status, 0, Cap)
 				db.WriteJSON(buffer)
 			}
-		case <-tick.C:
-			for _, n := range names {
-				buf, _ := db.ReadRecord(n)
-				var b Buffer
-				json.Unmarshal(buf, &b)
-				logger.Info.Printf("%v", b)
-			}
+			// case <-tick.C:
+			// 	for _, n := range names {
+			// 		buf, _ := db.ReadRecord(n)
+			// 		var b Buffer
+			// 		json.Unmarshal(buf, &b)
+			// 		logger.Info.Printf("%v", b)
+			// 	}
 
 		}
 

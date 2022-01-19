@@ -45,6 +45,3 @@ func code(message []byte) (string, error) {
 
 	return base64.StdEncoding.EncodeToString(chipText), nil
 }
-func messageConnect() string {
-	return "1011345"
-}

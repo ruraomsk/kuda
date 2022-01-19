@@ -1,6 +1,6 @@
 package hard
 
-import "github.com/ruraomsk/TLServer/logger"
+import "github.com/ruraomsk/ag-server/logger"
 
 func WatchDogStart() {
 	logger.Info.Printf("Watcdog init...")
