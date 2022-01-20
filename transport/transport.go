@@ -14,12 +14,7 @@ import (
 	"github.com/ruraomsk/kuda/brams"
 )
 
-type Message struct {
-	Messages map[string][]byte `json:"messages"`
-}
-
 var key []byte
-var emptyMessage = Message{}
 
 func ConnectWithServer(serverIP string, id int) (net.Conn, error) {
 

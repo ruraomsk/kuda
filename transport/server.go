@@ -66,10 +66,12 @@ func StartServerExchange(ip string) {
 				var tr pudge.Traffic
 				db.ReadJSON(tr)
 				logger.Info.Printf("traffic %v", tr)
+				writeChan <- statusMessage()
+				ticker.Reset(time.Duration(base.TMax * int64(time.Minute)))
 			case <-hour.C:
 				db, _ := brams.Open("traffic")
 				var tr pudge.Traffic
-				db.ReadJSON(tr)
+				db.ReadJSON(&tr)
 				tr.FromDevice1Hour = tr.LastFromDevice1Hour
 				tr.LastFromDevice1Hour = 0
 				tr.ToDevice1Hour = tr.LastToDevice1Hour

@@ -1,8 +1,11 @@
 package data
 
+import "time"
+
 type BaseCtrl struct {
-	ID       int `json:"id"`
-	TechMode int `json:"techmode"` //Технологический режим
+	ID         int       `json:"id"`
+	TimeDevice time.Time `json:"dtime"`    // Время устройства
+	TechMode   int       `json:"techmode"` //Технологический режим
 	/*
 		Технологический режим
 		1 - выбор ПК по времени по суточной карте ВР-СК;
