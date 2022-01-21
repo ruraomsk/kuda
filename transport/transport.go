@@ -12,6 +12,7 @@ import (
 	"github.com/ruraomsk/ag-server/logger"
 	"github.com/ruraomsk/ag-server/pudge"
 	"github.com/ruraomsk/kuda/brams"
+	"github.com/ruraomsk/kuda/status"
 )
 
 var key []byte
@@ -40,6 +41,12 @@ func ConnectWithServer(serverIP string, id int) (net.Conn, error) {
 		return nil, err
 	}
 	message = strings.ReplaceAll(message, "\n", "")
+	if strings.Contains(message, "notFound!") {
+		logger.Error.Printf("Не прописан на сервере")
+		status.ServerMessage("Не прописан на сервере", 3)
+		socket.Close()
+		return nil, fmt.Errorf("не прописан на сервере")
+	}
 	key, err = base64.StdEncoding.DecodeString(message)
 	if err != nil {
 		logger.Error.Printf("Чтение ключа от %s %s", socket.RemoteAddr(), err.Error())
@@ -97,13 +104,13 @@ func SendMessageToServer(socket net.Conn, outchan chan Message, toutsend time.Du
 			return
 		}
 		n, _ := writer.WriteString(str)
+		addTraffic(n, 0)
 		_, _ = writer.WriteString("\n")
 		err = writer.Flush()
 		if err != nil {
 			logger.Error.Printf("Передача сообщения для %s %s", socket.RemoteAddr().String(), err.Error())
 			return
 		}
-		addTraffic(n, 0)
 	}
 }
 func addTraffic(in, out int) {
@@ -112,9 +119,7 @@ func addTraffic(in, out int) {
 	var tr = pudge.Traffic{}
 	db, err = brams.Open("traffic")
 	if err != nil {
-		brams.CreateDb("traffic")
-		db, _ = brams.Open("traffic")
-		db.WriteJSON(tr)
+		return
 	}
 	db.ReadJSON(&tr)
 	tr.LastFromDevice1Hour += uint64(out)

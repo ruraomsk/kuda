@@ -61,20 +61,27 @@ func main() {
 	fmt.Println("kuda start")
 	logger.Info.Println("kuda start")
 	watch := time.NewTicker(time.Duration(setup.Set.WatchDog.Step) * time.Millisecond)
+
+loop:
 	for {
 		select {
 		case <-c:
 			fmt.Println("Wait make abort...")
+			hard.ExitV220()
+			if transport.IsConnected {
+				transport.ExitDevice <- 1
+			}
+			time.Sleep(3 * time.Second)
 			dbstop <- 1
 			hardstop <- 1
 			time.Sleep(3 * time.Second)
-			fmt.Println("kuda stop")
-			logger.Info.Println("kuda stop")
-			os.Exit(0)
-
+			break loop
 		case <-watch.C:
 			hard.WatchDogTick()
+
 		}
 	}
+	fmt.Println("kuda stop")
+	logger.Info.Println("kuda stop")
 
 }

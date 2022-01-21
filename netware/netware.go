@@ -27,7 +27,7 @@ func listenCommand() {
 
 func StartNetware() {
 	logger.Info.Println("Netware start")
-	status.ServerMessage("Запущен внутренний http server")
+	status.NetwareMessage("Запущен внутренний http server")
 	go listenCommand()
 	go server()
 }

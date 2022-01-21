@@ -1,8 +1,21 @@
 package status
 
-import "time"
+import (
+	"time"
 
-func ServerMessage(message string) {
+	"github.com/ruraomsk/ag-server/pudge"
+	"github.com/ruraomsk/kuda/brams"
+)
+
+func ServerMessage(message string, code int) {
+	db, err := brams.Open("Status")
+	if err == nil {
+		var s pudge.Status
+		db.ReadJSON(&s)
+		s.StatusServer = code
+		db.WriteJSON(s)
+		db.Close()
+	}
 	Messages <- Message{Type: Server, Time: time.Now(), Message: message}
 }
 func HardMessage(message string) {
@@ -13,4 +26,7 @@ func ControllerMessage(message string) {
 }
 func TechMessage(message string) {
 	Messages <- Message{Type: Technology, Time: time.Now(), Message: message}
+}
+func NetwareMessage(message string) {
+	Messages <- Message{Type: NetWare, Time: time.Now(), Message: message}
 }

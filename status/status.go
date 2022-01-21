@@ -18,6 +18,7 @@ const (
 	Hard
 	Controller
 	Technology
+	NetWare
 )
 
 type Buffer struct {
@@ -36,7 +37,13 @@ type Status struct {
 }
 
 var (
-	names        = map[int]string{Server: "Сервер", Hard: "Оборудование", Controller: "Контроллер", Technology: "Технология"}
+	names = map[int]string{
+		Server:     "Сервер",
+		Hard:       "Оборудование",
+		Controller: "Контроллер",
+		Technology: "Технология",
+		NetWare:    "Браузер",
+	}
 	lastStatuses map[string]Status
 	Messages     chan Message
 	CleanAll     chan interface{}

@@ -10,7 +10,6 @@ import (
 	"os"
 	"sync"
 
-	"github.com/ruraomsk/ag-server/logger"
 	"github.com/ruraomsk/kuda/setup"
 )
 
@@ -124,7 +123,7 @@ func (db *Db) saveToFile() error {
 	if !db.update {
 		return nil
 	}
-	logger.Info.Printf("Сохраняем БД %s", db.Name)
+	// logger.Info.Printf("Сохраняем БД %s", db.Name)
 	fname := path + db.Name + ext
 	buffer, err := json.Marshal(db)
 	if err != nil {
