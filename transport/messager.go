@@ -1,6 +1,10 @@
 package transport
 
 import (
+	"encoding/json"
+
+	"github.com/ruraomsk/ag-server/comm"
+	"github.com/ruraomsk/ag-server/logger"
 	"github.com/ruraomsk/ag-server/pudge"
 	"github.com/ruraomsk/kuda/brams"
 	"github.com/ruraomsk/kuda/data"
@@ -27,7 +31,20 @@ var (
 
 func workMessage(message Message) (Message, bool) {
 	if _, is := message.Messages["status"]; is {
+		logger.Info.Print("Запрос статуса")
 		return statusMessage(), true
+	}
+	if cmd, is := message.Messages["command"]; is {
+		var command comm.CommandARM
+		err := json.Unmarshal(cmd, &command)
+		if err != nil {
+			logger.Error.Printf("При расшифровке %v %s", string(cmd), err.Error())
+			return emptyMessage, false
+		}
+		if message, is := execCommand(command); is {
+			return message, is
+		}
+		return emptyMessage, false
 	}
 	return emptyMessage, false
 }

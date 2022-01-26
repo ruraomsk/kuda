@@ -30,3 +30,22 @@ type BaseCtrl struct {
 	TMax    int64 `json:"tmax"` //Максимальное время ожидания ответа от сервера в секундах
 	TimeOut int64 `json:"tout"` //TimeOut на чтение от контроллера в секундах
 }
+
+type Dates struct {
+	Name string    `json:"name"`
+	Date time.Time `json:"date"`
+}
+
+var DatesList = []Dates{
+	{Name: "SetupDK", Date: time.UnixMilli(0)},
+	{Name: "SetDK", Date: time.UnixMilli(0)},
+	{Name: "MounthSets", Date: time.UnixMilli(0)},
+	{Name: "WeekSets", Date: time.UnixMilli(0)},
+	{Name: "DaySets", Date: time.UnixMilli(0)},
+	{Name: "SetCtrl", Date: time.UnixMilli(0)},
+	{Name: "SetTimeUse", Date: time.UnixMilli(0)},
+	{Name: "TimeDevice", Date: time.UnixMilli(0)},
+	{Name: "StatDefine", Date: time.UnixMilli(0)},
+	{Name: "PointSet", Date: time.UnixMilli(0)},
+	{Name: "UseInput", Date: time.UnixMilli(0)},
+}

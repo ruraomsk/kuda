@@ -65,7 +65,7 @@ func StartServerExchange(ip string) {
 				if !ok {
 					break loop
 				}
-				logger.Debug.Printf("Пришло %v", message)
+				// logger.Debug.Printf("Пришло %v", message)
 				ReplayMessage, send := workMessage(message)
 				if send {
 					writeChan <- ReplayMessage
