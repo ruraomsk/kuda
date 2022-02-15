@@ -28,7 +28,7 @@ var (
 func init() {
 	setup.Set = new(setup.Setup)
 	if _, err := toml.DecodeFS(config, "config/config.toml", &setup.Set); err != nil {
-		fmt.Println("Отсутствует config.toml")
+		fmt.Println("Dissmis config.toml")
 		os.Exit(-1)
 		return
 	}
@@ -49,13 +49,13 @@ func main() {
 	brams.StartBrams(dbstop)
 
 	if err := status.StartStatus(); err != nil {
-		logger.Error.Printf("Подсистема status %s", err.Error())
+		logger.Error.Printf("Subsystem status %s", err.Error())
 		return
 	}
 	hard.StartHard(hardstop)
 	netware.StartNetware()
 	usb.StartUSB()
-	go transport.StartServerExchange("127.0.0.1:2018")
+	go transport.StartServerExchange("192.168.115.159:2018")
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	fmt.Println("kuda start")

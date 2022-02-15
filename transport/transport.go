@@ -30,26 +30,26 @@ func ConnectWithServer(serverIP string, id int) (net.Conn, error) {
 	writer.WriteString("\n")
 	err = writer.Flush()
 	if err != nil {
-		logger.Error.Printf("Передача сообщения для %s %s", socket.RemoteAddr(), err.Error())
+		logger.Error.Printf("Send message for %s %s", socket.RemoteAddr(), err.Error())
 		socket.Close()
 		return nil, err
 	}
 	message, err := reader.ReadString('\n')
 	if err != nil {
-		logger.Error.Printf("Чтение ключа от %s %s", socket.RemoteAddr(), err.Error())
+		logger.Error.Printf("Reading key for %s %s", socket.RemoteAddr(), err.Error())
 		socket.Close()
 		return nil, err
 	}
 	message = strings.ReplaceAll(message, "\n", "")
 	if strings.Contains(message, "notFound!") {
-		logger.Error.Printf("Не прописан на сервере")
-		status.ServerMessage("Не прописан на сервере", 3)
+		logger.Error.Printf("Not registration")
+		status.ServerMessage("Not registration", 3)
 		socket.Close()
-		return nil, fmt.Errorf("не прописан на сервере")
+		return nil, fmt.Errorf("not registration")
 	}
 	key, err = base64.StdEncoding.DecodeString(message)
 	if err != nil {
-		logger.Error.Printf("Чтение ключа от %s %s", socket.RemoteAddr(), err.Error())
+		logger.Error.Printf("Reading key from %s %s", socket.RemoteAddr(), err.Error())
 		socket.Close()
 		return nil, err
 
@@ -65,7 +65,7 @@ func GetMessageFromServer(socket net.Conn, inchan chan Message, toutin time.Dura
 		socket.SetReadDeadline(time.Now().Add(toutin))
 		message, err := reader.ReadString('\n')
 		if err != nil {
-			logger.Error.Printf("Чтение сообщения от %s %s", socket.RemoteAddr().String(), err.Error())
+			logger.Error.Printf("Reading message from %s %s", socket.RemoteAddr().String(), err.Error())
 			return
 		}
 
@@ -73,13 +73,13 @@ func GetMessageFromServer(socket net.Conn, inchan chan Message, toutin time.Dura
 		message = strings.ReplaceAll(message, "\n", "")
 		mess, err := decode(message)
 		if err != nil {
-			logger.Error.Printf("Декодирование сообщения от %s %s", socket.RemoteAddr().String(), err.Error())
+			logger.Error.Printf("Decode message from %s %s", socket.RemoteAddr().String(), err.Error())
 			return
 		}
 		var inm Message
 		err = json.Unmarshal(mess, &inm)
 		if err != nil {
-			logger.Error.Printf("Unmarshal  сообщения %v %s", message, err.Error())
+			logger.Error.Printf("Unmarshal  message %v %s", message, err.Error())
 			return
 		}
 		inchan <- inm
@@ -94,13 +94,13 @@ func SendMessageToServer(socket net.Conn, outchan chan Message, toutsend time.Du
 		message := <-outchan
 		buffer, err := json.Marshal(message)
 		if err != nil {
-			logger.Error.Printf("Marshal  сообщения %v %s", message, err.Error())
+			logger.Error.Printf("Marshal  message %v %s", message, err.Error())
 			return
 		}
 		socket.SetWriteDeadline(time.Now().Add(toutsend))
 		str, err := code(buffer)
 		if err != nil {
-			logger.Error.Printf("Кодирование сообщения %v %s", buffer, err.Error())
+			logger.Error.Printf("Coding message %v %s", buffer, err.Error())
 			return
 		}
 		n, _ := writer.WriteString(str)
@@ -108,7 +108,7 @@ func SendMessageToServer(socket net.Conn, outchan chan Message, toutsend time.Du
 		_, _ = writer.WriteString("\n")
 		err = writer.Flush()
 		if err != nil {
-			logger.Error.Printf("Передача сообщения для %s %s", socket.RemoteAddr().String(), err.Error())
+			logger.Error.Printf("Send message to %s %s", socket.RemoteAddr().String(), err.Error())
 			return
 		}
 	}

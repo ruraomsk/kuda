@@ -25,13 +25,29 @@ const (
 func execCommand(cmd comm.CommandARM) (Message, bool) {
 	var err error
 	var db, dbb, dbd *brams.Db
-	logger.Info.Printf("команда %v", cmd)
+	logger.Info.Printf("Command %v", cmd)
+	_, err = brams.Open("StatusCommandDU")
+	if err != nil {
+		brams.CreateDb("StatusCommandDU")
+		db, _ = brams.Open("StatusCommandDU")
+		v := pudge.StatusCommandDU{}
+		db.WriteJSON(v)
+		db.Close()
+	}
+	_, err = brams.Open("DK")
+	if err != nil {
+		brams.CreateDb("DK")
+		db, _ = brams.Open("DK")
+		v := pudge.DK{}
+		db.WriteJSON(v)
+		db.Close()
+	}
 	switch cmd.Command {
 	case Control:
 		if cmd.Params == 1 {
-			logger.Info.Print("Начинаем прием привязок")
+			logger.Info.Print("Start blinds")
 		} else {
-			logger.Info.Print("Прием привязок закончен")
+			logger.Info.Print("Stop blinds")
 		}
 
 	case Sfdk:
@@ -155,7 +171,7 @@ func execCommand(cmd comm.CommandARM) (Message, bool) {
 		if err != nil {
 			err := brams.CreateDb("dates", "name")
 			if err != nil {
-				logger.Error.Printf("Не могу создать dates %s", err.Error())
+				logger.Error.Printf("not building dates %s", err.Error())
 				return emptyMessage, false
 			}
 			db, _ = brams.Open("dates")
@@ -165,8 +181,10 @@ func execCommand(cmd comm.CommandARM) (Message, bool) {
 		}
 		var dt data.Dates
 		m := emptyMessage
+		m.Messages = make(map[string][]byte)
 		mas := make([]data.Dates, 0)
 		dts, _ := db.ReadListKeys(0)
+
 		for _, dn := range dts {
 			db.ReadJSON(&dt, dn)
 			mas = append(mas, dt)
@@ -175,8 +193,6 @@ func execCommand(cmd comm.CommandARM) (Message, bool) {
 		m.Messages["dates"] = buf
 		db.Close()
 		return m, true
-	case GetPriv:
-
 	}
 	return emptyMessage, false
 }

@@ -72,7 +72,7 @@ func mainLoop() {
 			name, ok := names[mess.Type]
 
 			if !ok {
-				logger.Error.Printf("Нет такого типа %v", mess)
+				logger.Error.Printf("Dismiss type %v", mess)
 				continue
 			}
 			lastm, ok := lastStatuses[name]
@@ -118,7 +118,7 @@ func StartStatus() error {
 	if err != nil {
 		//Первый запуск создаем базу данных и инициализируемся
 		if err = brams.CreateDb("statuses", "name"); err != nil {
-			return fmt.Errorf("не могу создать бд statuses")
+			return fmt.Errorf("Not building db statuses")
 		}
 		db, _ = brams.Open("statuses")
 		for _, n := range names {

@@ -152,7 +152,7 @@ func (db *Db) saveToFile() error {
 }
 func (db *Db) makeListKeys(limit int, keys []interface{}) ([]string, error) {
 	if limit == 0 {
-		limit = math.MaxInt64
+		limit = math.MaxInt32
 	}
 	if len(db.Defkey) == 0 {
 		return make([]string, 0), nil
@@ -160,6 +160,18 @@ func (db *Db) makeListKeys(limit int, keys []interface{}) ([]string, error) {
 	var err error
 	m := make(map[string]interface{})
 	result := make([]string, 0)
+	if len(keys) == 0 {
+		// logger.Debug.Printf("Start len keys=0 %v", db.values)
+		for full := range db.values {
+			if limit > 0 {
+				// logger.Debug.Printf("append key %s", full)
+				result = append(result, full)
+				limit--
+			}
+
+		}
+		return result, nil
+	}
 	key := make([][]byte, 0)
 	count := 0
 	for _, k := range keys {

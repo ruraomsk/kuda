@@ -31,14 +31,14 @@ var (
 
 func workMessage(message Message) (Message, bool) {
 	if _, is := message.Messages["status"]; is {
-		logger.Info.Print("Запрос статуса")
+		logger.Info.Print("Request status")
 		return statusMessage(), true
 	}
 	if cmd, is := message.Messages["command"]; is {
 		var command comm.CommandARM
 		err := json.Unmarshal(cmd, &command)
 		if err != nil {
-			logger.Error.Printf("При расшифровке %v %s", string(cmd), err.Error())
+			logger.Error.Printf("Encoding %v %s", string(cmd), err.Error())
 			return emptyMessage, false
 		}
 		if message, is := execCommand(command); is {

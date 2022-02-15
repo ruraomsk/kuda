@@ -15,7 +15,7 @@ func saveDBs() {
 	for _, db := range dbs.dbs {
 		err := db.saveToFile()
 		if err != nil {
-			logger.Error.Printf("Сохранение БД %s %s", db.Name, err.Error())
+			logger.Error.Printf("Saving БД %s %s", db.Name, err.Error())
 		}
 	}
 }

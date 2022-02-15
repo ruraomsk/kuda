@@ -74,7 +74,7 @@ func StartServerExchange(ip string) {
 
 			case <-ticker.C:
 				writeChan <- statusMessage()
-				logger.Info.Printf("шлем статус %d", base.TMax)
+				logger.Info.Printf("Send status %d", base.TMax)
 				ticker.Reset(time.Duration(base.TMax) * time.Second)
 			case <-hour.C:
 				db, _ := brams.Open("traffic")
@@ -90,7 +90,7 @@ func StartServerExchange(ip string) {
 				if !ok {
 					break loop
 				}
-				logger.Debug.Printf("Пришло %v", command)
+				logger.Debug.Printf("Input %v", command)
 			case <-ExitDevice:
 				writeChan <- exitMessage()
 				breakWork = true
@@ -112,10 +112,10 @@ func StartServerExchange(ip string) {
 		}
 		IsConnected = false
 		socket.Close()
-		status.ServerMessage("Отсутствует связь с сервером", 1)
+		status.ServerMessage("Error connection from server", 1)
 		ticker.Stop()
 		hour.Stop()
 		time.Sleep(time.Second)
 	}
-	logger.Info.Print("Обмен с сервером прекращен")
+	logger.Info.Print("Exchange to server is stoped")
 }

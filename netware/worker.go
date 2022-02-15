@@ -15,7 +15,7 @@ func workerNetware(socket net.Conn) {
 	for {
 		in, err := reader.ReadString('\n')
 		if err != nil {
-			logger.Error.Printf("Чтение команды для %s %s", socket.RemoteAddr(), err.Error())
+			logger.Error.Printf("reading command for %s %s", socket.RemoteAddr(), err.Error())
 			return
 		}
 		logger.Info.Printf("%s", in)
