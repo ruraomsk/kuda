@@ -7,4 +7,7 @@ require (
 	github.com/ruraomsk/ag-server v0.0.0-20220119062958-f86b3cb2675f
 )
 
-require github.com/lib/pq v1.10.4 // indirect
+require (
+	github.com/goburrow/serial v0.1.0
+	github.com/lib/pq v1.10.4 // indirect
+)
