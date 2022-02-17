@@ -1,4 +1,4 @@
-package hard
+package hardware
 
 import "github.com/ruraomsk/ag-server/logger"
 

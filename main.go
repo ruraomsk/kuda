@@ -12,7 +12,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/ruraomsk/ag-server/logger"
 	"github.com/ruraomsk/kuda/brams"
-	"github.com/ruraomsk/kuda/hard"
+	"github.com/ruraomsk/kuda/hardware"
 	"github.com/ruraomsk/kuda/netware"
 	"github.com/ruraomsk/kuda/setup"
 	"github.com/ruraomsk/kuda/status"
@@ -44,7 +44,6 @@ func main() {
 		return
 	}
 	dbstop := make(chan interface{})
-	hardstop := make(chan interface{})
 
 	brams.StartBrams(dbstop)
 
@@ -52,7 +51,7 @@ func main() {
 		logger.Error.Printf("Subsystem status %s", err.Error())
 		return
 	}
-	hard.StartHard(hardstop)
+	hardware.StartHard()
 	netware.StartNetware()
 	usb.StartUSB()
 	go transport.StartServerExchange("192.168.115.159:2018")
@@ -67,17 +66,17 @@ loop:
 		select {
 		case <-c:
 			fmt.Println("Wait make abort...")
-			hard.ExitV220()
+			hardware.ExitV220()
 			if transport.IsConnected {
 				transport.ExitDevice <- 1
 			}
 			time.Sleep(3 * time.Second)
 			dbstop <- 1
-			hardstop <- 1
+			// hardstop <- 1
 			time.Sleep(3 * time.Second)
 			break loop
 		case <-watch.C:
-			hard.WatchDogTick()
+			hardware.WatchDogTick()
 
 		}
 	}

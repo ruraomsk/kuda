@@ -28,6 +28,7 @@ func workerDBFs(stop chan interface{}) {
 			saveDBs()
 		case <-stop:
 			work = false
+			logger.Info.Print("brams stoped")
 			saveDBs()
 			return
 		}
