@@ -30,20 +30,5 @@ func workModuleCPU() {
 		logger.Error.Printf("moduleCpu status  %d", int(Cpu.masterTCP.hr[Cpu.moduleStatus]))
 		return
 	}
-	for Cpu.work {
-		v := 1
-		for {
-			logger.Info.Printf("moduleCpu work %d", v)
-			for i := 1; i < 11; i++ {
-				Cpu.SetDO(i, v)
-				time.Sleep(time.Second)
-			}
-			v++
-			if v > 1 {
-				v = 0
-			}
-
-		}
-	}
-	logger.Info.Printf("moduleCpu ending")
+	logger.Info.Printf("moduleCpu working")
 }

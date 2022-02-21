@@ -19,7 +19,10 @@ type WatchDog struct {
 	Step int `toml:"step"`
 }
 type Hardware struct {
-	Step int `toml:"step"`
+	Step    int    `toml:"step"`
+	Connect string `toml:"connect"`
+	SPort   int    `toml:"sport"`
+	C8count int    `toml:"count"`
 }
 type Netware struct {
 	Port     int    `toml:"port"`

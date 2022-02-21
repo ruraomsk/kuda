@@ -16,6 +16,7 @@ import (
 	"github.com/ruraomsk/kuda/netware"
 	"github.com/ruraomsk/kuda/setup"
 	"github.com/ruraomsk/kuda/status"
+	"github.com/ruraomsk/kuda/tester"
 	"github.com/ruraomsk/kuda/transport"
 	"github.com/ruraomsk/kuda/usb"
 )
@@ -60,6 +61,8 @@ func main() {
 	fmt.Println("kuda start")
 	logger.Info.Println("kuda start")
 	watch := time.NewTicker(time.Duration(setup.Set.WatchDog.Step) * time.Millisecond)
+	go tester.CpuTester()
+	go tester.C8Tester()
 
 loop:
 	for {

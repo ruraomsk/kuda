@@ -3,6 +3,7 @@ package hardware
 import "sync"
 
 type ModuleCPU struct {
+	connect       string
 	moduleSlaveID int
 	moduleNumber  int
 	moduleType    int //Место хранения номера модуля
@@ -58,11 +59,11 @@ type DO struct {
 	kz_ctrl  bs  //Место установки защиты от КЗ
 }
 
-func (d *DO) getValue(hr []uint16) bool {
-	v := hr[d.value.w]
-	v = v >> uint16(d.value.b)
-	return v&1 == 1
-}
+// func (d *DO) getValue(hr []uint16) bool {
+// 	v := hr[d.value.w]
+// 	v = v >> uint16(d.value.b)
+// 	return v&1 == 1
+// }
 
 type AO struct {
 	value  int //Место хранения код АЦП значения

@@ -9,67 +9,23 @@ import (
 	"github.com/ruraomsk/kuda/setup"
 )
 
-type MasterTcp struct {
-	master     modbus.TCPClientHandler
-	client     modbus.Client
-	hrInternal []uint16
-	hr         []uint16
-}
-
-// type MasterRtu struct {
-// 	master modbus.RTUClientHandler
-// 	client modbus.Client
-// 	hr     []uint16
-// }
-
-func (m *MasterTcp) readAllHR() error {
-	if len(m.hrInternal) == 0 {
-		return nil
-	}
-	size := uint16(100)
-	ref := uint16(0)
-	for count := len(m.hrInternal); count > 0; count -= int(size) {
-		len := count
-		if count > int(size) {
-			len = int(size)
-		}
-		buff, err := m.client.ReadHoldingRegisters(ref, uint16(len))
-		if err != nil {
-			logger.Error.Printf("read hr %d %d %s", ref, len, err.Error())
-			return err
-		}
-		pos := ref
-		left := 0
-		for i := 0; i < len; i++ {
-			m.hrInternal[pos] = (uint16(buff[left]) << 8) | uint16(buff[left+1])
-			pos++
-			left += 2
-		}
-		ref += size
-	}
-	return nil
-}
-func (m *MasterTcp) writeOneHR(address int, value int) error {
-	_, err := m.client.WriteSingleRegister(uint16(address), uint16(value))
-	return err
-}
-func (s *ModuleCPU) setMasterTCP() error {
+func (s *ModuleC8) setMasterTCP() error {
 	m := &MasterTcp{hrInternal: make([]uint16, s.size), hr: make([]uint16, s.size)} //549)}
-	s.connect = "127.0.0.1:502"
 	m.master = *modbus.NewTCPClientHandler(s.connect)
 	m.master.SlaveId = byte(s.moduleSlaveID)
 	m.master.Timeout = time.Second
 	m.master.IdleTimeout = time.Minute
+	s.writer = make(chan writeHR)
 	if err := m.master.Connect(); err != nil {
-		return fmt.Errorf("error modbus %s", err.Error())
+		return fmt.Errorf("error modbus %s %s", s.connect, err.Error())
 	}
 	m.client = modbus.NewClient(&m.master)
 	s.masterTCP = m
 	err := m.readAllHR()
 	return err
 }
-func (s *ModuleCPU) loopTCP() {
-
+func (s *ModuleC8) loopTCP() {
+	// logger.Info.Printf("start modbus loop %s", s.connect)
 	loop := time.NewTicker(time.Duration(setup.Set.Hardware.Step) * time.Millisecond)
 	for {
 	internal:
@@ -77,7 +33,6 @@ func (s *ModuleCPU) loopTCP() {
 			select {
 			case <-loop.C:
 				if err := s.masterTCP.readAllHR(); err != nil {
-					logger.Error.Printf("cpu %s", err.Error())
 					s.work = false
 					break internal
 				} else {
@@ -89,6 +44,7 @@ func (s *ModuleCPU) loopTCP() {
 					s.mutex.Unlock()
 				}
 			case wr := <-s.writer:
+				// logger.Debug.Printf("%d %v", s.moduleNumber, wr)
 				//Пришла команда на запись если поле bit <0 то это просто слово
 				if wr.pos.b < 0 {
 					err := s.masterTCP.writeOneHR(wr.pos.w, wr.value)
@@ -121,22 +77,23 @@ func (s *ModuleCPU) loopTCP() {
 		}
 		s.masterTCP.master.Close()
 		time.Sleep(time.Second)
+
 		for {
-			s.masterTCP.master = *modbus.NewTCPClientHandler(s.connect)
 			if err := s.masterTCP.master.Connect(); err != nil {
-				logger.Error.Printf("error modbus %s", err.Error())
-				time.Sleep(time.Second)
+				logger.Error.Printf("error modbus %s %s", s.connect, err.Error())
+				time.Sleep(10 * time.Second)
 				continue
 			}
 			s.masterTCP.client = modbus.NewClient(&s.masterTCP.master)
 			if err := s.masterTCP.readAllHR(); err != nil {
-				logger.Error.Printf("error modbus %s", err.Error())
-				time.Sleep(time.Second)
+				logger.Error.Printf("error modbus %s %s", s.connect, err.Error())
+				time.Sleep(10 * time.Second)
 				continue
 			}
 			s.work = true
 			break
-
 		}
+
 	}
+
 }

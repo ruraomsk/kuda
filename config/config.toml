@@ -6,6 +6,9 @@ logpath="log/"
 	step=1
 [hardware]
 	step=100		#цикл опроса датчиков миллисекунд
+	connect="192.168.115.159"
+	sport=5000
+	count=3
 [netware]
 	port=8000       ## порт откуда ждем настройки
 [rtc]
