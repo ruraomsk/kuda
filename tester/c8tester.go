@@ -20,6 +20,15 @@ func C8Tester() {
 				time.Sleep(time.Second)
 				if hardware.IsWorkC8(num) {
 					hardware.C8SetValue(num, j, v)
+					if v == 1 {
+						time.Sleep(time.Second)
+						for k := 0; k < 10; k++ {
+							time.Sleep(500 * time.Millisecond)
+							hardware.C8SetValue(num, j, 0)
+							time.Sleep(500 * time.Millisecond)
+							hardware.C8SetValue(num, j, 1)
+						}
+					}
 				} else {
 					waitC8(num)
 
