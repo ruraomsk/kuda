@@ -63,6 +63,7 @@ func main() {
 	watch := time.NewTicker(time.Duration(setup.Set.WatchDog.Step) * time.Millisecond)
 	go tester.CpuTester()
 	go tester.C8Tester()
+	tester.BinTest()
 
 loop:
 	for {

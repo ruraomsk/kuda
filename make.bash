@@ -7,3 +7,4 @@ if [ $? -ne 0 ]; then
 fi
 echo 'Copy kuda to device'
 scp kuda admin@192.168.115.29:/home/admin
+#scp test.bin admin@192.168.115.29:/home/admin

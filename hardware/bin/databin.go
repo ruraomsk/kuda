@@ -25,24 +25,27 @@ type CMK struct {
 	Phases        []int         `json:"phases"`       //18 - номера фаз базовой РПУ
 	Switches      []int         `json:"switches"`     //19 - Массив возможных переходов ??
 	KonfProms     []KonfProm    `json:"konfprom"`     //20 - Матрица конфликтных  для пром такта
+	Brokens       []Mask        `json:"brokens"`      //22 - лампы контроллируемые на полное перегорание
 }
 type NtoPhase struct {
 	NumPhase int   `json:"nph"`  // Номер фазы
 	Naps     []int `json:"naps"` // Список направлений в фазе
 }
 type TirToNap struct {
-	Green  int `json:"green"`  // Номер зеленого тиристора
-	Yellow int `json:"yellow"` // Номер желтого тиристора
-	Red1   int `json:"red1"`   // Красный первый
-	Red2   int `json:"red2"`   // Красный второй
-	Red3   int `json:"red3"`   // Красный третий
+	Number int   `json:"num"`    // Номер направления
+	Green  int   `json:"green"`  // Номер зеленого тиристора
+	Yellow int   `json:"yellow"` // Номер желтого тиристора
+	Reds   []int `json:"reds"`   // Красный первый и так далее
 }
 type TimeToPhase struct {
 	NumPhase int `json:"nphase"` // Номер фазы
 	Tmin     int `json:"tmin"`   // Время фазы
 }
 type RPU struct {
-	Tcycle   int     `json:"tcycle"` // Длительность цикла
+	Number int `json:"number"` //Номер РПУ
+	Tcycle int `json:"tcycle"` // Длительность цикла
+	// Del1     int     `json:"d1"`     //Остаток от деленения 256 на время цикла
+	// Del2     int     `json:"d2"`     //Остаток от деленения 65536 на время цикла
 	Continue bool    `json:"cont"`   // Признак продолжения цикла
 	Phases   []Phase `json:"pahses"` // Фазы вызываемые в цикле
 }
@@ -61,11 +64,12 @@ type PromTakt struct {
 	RedYellow  int `json:"ry"`  //Начало красно-желтого
 }
 type Mask struct {
-	Number int     `json:"number"` //Номер строки
-	Mask   [6]byte `json:"mask"`   //Битовая маска
+	Number int    `json:"number"` //Номер строки
+	Mask   []byte `json:"mask"`   //Битовая маска
 }
 type CK struct {
-	Lines []Line `json:"lines"` //Переключения в суточной карте
+	Number int    `json:"number"` //Номер карты
+	Lines  []Line `json:"lines"`  //Переключения в суточной карте
 }
 type Line struct {
 	Time   int `json:"time"`   //Время переключения
