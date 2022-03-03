@@ -58,12 +58,20 @@ func main() {
 	go transport.StartServerExchange("192.168.115.159:2018")
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
+
 	fmt.Println("kuda start")
 	logger.Info.Println("kuda start")
 	watch := time.NewTicker(time.Duration(setup.Set.WatchDog.Step) * time.Millisecond)
 	go tester.CpuTester()
-	go tester.C8Tester()
-	tester.BinTest()
+	// go tester.C8Tester()
+	//tester.BinTest()
+	buffer, err := config.ReadFile("config/test.json")
+	if err != nil {
+		logger.Error.Printf("test.json %s", err.Error())
+		fmt.Println(err.Error())
+		return
+	}
+	go tester.RpuTest(buffer)
 
 loop:
 	for {

@@ -5,7 +5,7 @@ type CMK struct {
 	BaseRPU       int           `json:"brpu"`         // Номер базовой РПУ
 	NumTU         int           `json:"ntu"`          // Номер ТУ
 	NumDK         int           `json:"ndk"`          // Номер ДК
-	NtoPhases     []NtoPhase    `json:"naptoph"`      // 1 - Массив привязки направлений к фазам
+	NtoPhases     []NtoPhase    `json:"naptoph"`      // 1 - Массив привязки направлений к фазам (указаны те направления которые разрешены)
 	TirToNaps     []TirToNap    `json:"tirtonap"`     // 2 - Привязка тиристоров к направлениям
 	TminToPhases  []TimeToPhase `json:"tmintophases"` // 3 - Привязка Тмин к номеру фазы
 	RPUs          []RPU         `json:"rpus"`         // 4 - Привязка РПУ

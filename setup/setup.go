@@ -23,6 +23,9 @@ type Hardware struct {
 	Connect string `toml:"connect"`
 	SPort   int    `toml:"sport"`
 	C8count int    `toml:"count"`
+	LongKK  int    `toml:"longkk"`
+	PinOS   int    `toml:"pinos"`
+	PinYB   int    `toml:"pinyb"`
 }
 type Netware struct {
 	Port     int    `toml:"port"`

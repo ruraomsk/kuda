@@ -1,6 +1,8 @@
 package hardware
 
-import "github.com/ruraomsk/ag-server/logger"
+import (
+	"github.com/ruraomsk/ag-server/logger"
+)
 
 func (c *ModuleCPU) IsWork() bool {
 	return c.work
@@ -60,6 +62,35 @@ func C8SetValue(number, chanel, value int) {
 		logger.Error.Printf("c8 number %d bad chanel %d", number, chanel)
 		return
 	}
-	// logger.Debug.Printf("%v %d", v.value, value)
+	m.writer <- writeHR{pos: v.value, value: value}
+}
+func C8GetOut(chanel int) bool {
+	number := (chanel / 8) + 2
+	m, is := MapC8[number]
+	if !is {
+		logger.Error.Printf("c8 number bad  %d", number)
+		return false
+
+	}
+	v, is := m.с8[chanel%8]
+	if !is {
+		logger.Error.Printf("c8 number %d bad chanel %d", number, chanel%8)
+		return false
+	}
+	return v.getValue(m.masterTCP.hr)
+}
+func C8SetOut(chanel, value int) {
+	number := (chanel / 8) + 2
+	m, is := MapC8[number]
+	if !is {
+		logger.Error.Printf("c8 number bad  %d", number)
+		return
+
+	}
+	v, is := m.с8[chanel%8]
+	if !is {
+		logger.Error.Printf("c8 number %d bad chanel %d", number, chanel%8)
+		return
+	}
 	m.writer <- writeHR{pos: v.value, value: value}
 }

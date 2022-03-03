@@ -12,6 +12,14 @@ import (
 
 var MapC8 map[int]*ModuleC8
 
+func AllReady() bool {
+	for _, v := range MapC8 {
+		if !v.work {
+			return false
+		}
+	}
+	return Cpu.IsWork()
+}
 func StartHard() {
 	MapC8 = make(map[int]*ModuleC8)
 	go workModuleCPU()

@@ -49,8 +49,8 @@ func (m *MasterTcp) readAllHR() error {
 	}
 	return nil
 }
-func (m *MasterTcp) writeOneHR(address int, value int) error {
-	_, err := m.client.WriteSingleRegister(uint16(address), uint16(value))
+func (m *MasterTcp) writeOneHR(address int, value uint16) error {
+	_, err := m.client.WriteSingleRegister(uint16(address), value)
 	return err
 }
 func (s *ModuleCPU) setMasterTCP() error {
@@ -91,7 +91,7 @@ func (s *ModuleCPU) loopTCP() {
 			case wr := <-s.writer:
 				//Пришла команда на запись если поле bit <0 то это просто слово
 				if wr.pos.b < 0 {
-					err := s.masterTCP.writeOneHR(wr.pos.w, wr.value)
+					err := s.masterTCP.writeOneHR(wr.pos.w, uint16(wr.value))
 					if err != nil {
 						logger.Error.Printf("write device %d adress %d value %d %s", s.moduleNumber, wr.pos.w, wr.value, err.Error())
 						s.work = false
@@ -109,12 +109,13 @@ func (s *ModuleCPU) loopTCP() {
 					} else {
 						r = r & (^uint16(c))
 					}
-					err := s.masterTCP.writeOneHR(wr.pos.w, int(r))
+					err := s.masterTCP.writeOneHR(wr.pos.w, r)
 					if err != nil {
 						logger.Error.Printf("write device %d adress %d value %d %s", s.moduleNumber, wr.pos.w, r, err.Error())
 						s.work = false
 						break internal
 					}
+					s.masterTCP.hrInternal[wr.pos.w] = r
 					s.work = true
 				}
 			}
