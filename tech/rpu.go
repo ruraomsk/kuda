@@ -1,25 +1,19 @@
-package tester
+package tech
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
-	"github.com/ruraomsk/ag-server/logger"
 	"github.com/ruraomsk/kuda/hardware"
-	"github.com/ruraomsk/kuda/hardware/bin"
 	"github.com/ruraomsk/kuda/setup"
+	"github.com/ruraomsk/kuda/tech/bin"
 )
 
-var cmk bin.CMK
+//Исполнитель РПУ
+var cmk *bin.CMK
 
-func RpuTest(b []byte) {
-
-	err := json.Unmarshal(b, &cmk)
-	if err != nil {
-		logger.Error.Println(err.Error())
-		return
-	}
+func WorkRPU(c *bin.CMK) {
+	cmk = c
 	for !hardware.AllReady() {
 		fmt.Println("wait...")
 		time.Sleep(time.Second)
@@ -56,7 +50,7 @@ allBlink:
 				goto allBlink
 			}
 		case <-changePhase.C:
-			fmt.Printf("change phase %d\n", ch)
+			// fmt.Printf("change phase %d\n", ch)
 			ch++
 			changePhase = time.NewTimer(time.Duration(ch) * time.Second)
 		}
@@ -96,7 +90,6 @@ func zeroOn() {
 	for i := 0; i < setup.Set.Hardware.C8count; i++ {
 		num := i + 2
 		for j := 1; j < 9; j++ {
-			waitC8(num)
 			hardware.C8SetValue(num, j, 0)
 		}
 	}

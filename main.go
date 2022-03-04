@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -16,7 +17,8 @@ import (
 	"github.com/ruraomsk/kuda/netware"
 	"github.com/ruraomsk/kuda/setup"
 	"github.com/ruraomsk/kuda/status"
-	"github.com/ruraomsk/kuda/tester"
+	"github.com/ruraomsk/kuda/tech"
+	"github.com/ruraomsk/kuda/tech/bin"
 	"github.com/ruraomsk/kuda/transport"
 	"github.com/ruraomsk/kuda/usb"
 )
@@ -62,16 +64,22 @@ func main() {
 	fmt.Println("kuda start")
 	logger.Info.Println("kuda start")
 	watch := time.NewTicker(time.Duration(setup.Set.WatchDog.Step) * time.Millisecond)
-	go tester.CpuTester()
 	// go tester.C8Tester()
 	//tester.BinTest()
-	buffer, err := config.ReadFile("config/test.json")
+	buffer, err := config.ReadFile("config/rpu.json")
 	if err != nil {
-		logger.Error.Printf("test.json %s", err.Error())
+		logger.Error.Println(err.Error())
 		fmt.Println(err.Error())
 		return
 	}
-	go tester.RpuTest(buffer)
+	var cmk bin.CMK
+	err = json.Unmarshal(buffer, &cmk)
+	if err != nil {
+		logger.Error.Println(err.Error())
+		return
+	}
+
+	go tech.WorkRPU(&cmk)
 
 loop:
 	for {
