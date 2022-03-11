@@ -65,29 +65,37 @@ func C8SetValue(number, chanel, value int) {
 	m.writer <- writeHR{pos: v.value, value: value}
 }
 func C8GetOut(chanel int) bool {
-	number := (chanel / 8) + 2
+	number := ((chanel - 1) / 8) + 2
 	m, is := MapC8[number]
 	if !is {
 		logger.Error.Printf("c8 number bad  %d", number)
 		return false
 
 	}
-	v, is := m.с8[chanel%8]
+	ch := chanel % 8
+	if ch == 0 {
+		ch = 8
+	}
+	v, is := m.с8[ch]
 	if !is {
-		logger.Error.Printf("c8 number %d bad chanel %d", number, chanel%8)
+		logger.Error.Printf("c8 number %d bad chanel %d", number, ch)
 		return false
 	}
 	return v.getValue(m.masterTCP.hr)
 }
 func C8SetOut(chanel, value int) {
-	number := (chanel / 8) + 2
+	number := ((chanel - 1) / 8) + 2
 	m, is := MapC8[number]
 	if !is {
 		logger.Error.Printf("c8 number bad  %d", number)
 		return
 
 	}
-	v, is := m.с8[chanel%8]
+	ch := chanel % 8
+	if ch == 0 {
+		ch = 8
+	}
+	v, is := m.с8[ch]
 	if !is {
 		logger.Error.Printf("c8 number %d bad chanel %d", number, chanel%8)
 		return

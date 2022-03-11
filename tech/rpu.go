@@ -4,13 +4,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ruraomsk/ag-server/logger"
 	"github.com/ruraomsk/kuda/hardware"
-	"github.com/ruraomsk/kuda/setup"
 	"github.com/ruraomsk/kuda/tech/bin"
 )
 
-//Исполнитель РПУ
 var cmk *bin.CMK
+var commands chan bin.PhaseCommand
+var responce chan bin.ResponcePhase
+var err error
 
 func WorkRPU(c *bin.CMK) {
 	cmk = c
@@ -18,79 +20,53 @@ func WorkRPU(c *bin.CMK) {
 		fmt.Println("wait...")
 		time.Sleep(time.Second)
 	}
-	//Обнуляем все тиристоры
-	zeroOn()
-
-osStop:
-	osWork()
-allBlink:
-	allYellowBlink()
-	zeroOn()
-	//Выдаем кругом красный
-	for _, v := range cmk.TirToNaps {
-		for _, d := range v.Reds {
-			hardware.C8SetOut(d, 1)
-		}
+	commands = make(chan bin.PhaseCommand)
+	responce, err = bin.StartMechanics(cmk, commands)
+	if err != nil {
+		logger.Error.Println(err.Error())
+		return
 	}
-	time.Sleep(time.Duration(time.Duration(setup.Set.Hardware.LongKK) * time.Second))
-	zeroOn()
-	//Стартуем первую фазу
-	control := time.NewTicker(100 * time.Millisecond)
-	ch := 10
-	changePhase := time.NewTimer(time.Duration(ch) * time.Second)
+	step := 0
+	phaseNow := 0
+	ctrlCycle := time.NewTimer(1 * time.Hour)
+	ctrlPhase := time.NewTimer(100 * time.Hour)
 	for {
 		select {
-		case <-control.C:
-			if hardware.Cpu.GetDI(setup.Set.Hardware.PinOS) {
-				control.Stop()
-				goto osStop
+		case <-ctrlCycle.C:
+			step = 0
+			ctrlCycle = time.NewTimer(time.Duration(cmk.RPUs[0].Tcycle) * time.Second)
+			ctrlPhase = time.NewTimer(time.Duration(cmk.RPUs[0].Phases[0].Time) * time.Second)
+			phaseNow = cmk.RPUs[0].Phases[0].Phase
+			commands <- bin.PhaseCommand{Phase: phaseNow, PromTakt: true}
+		case <-ctrlPhase.C:
+			step++
+			ctrlPhase = time.NewTimer(time.Duration(cmk.RPUs[0].Phases[step].Time) * time.Second)
+			phaseNow = cmk.RPUs[0].Phases[step].Phase
+			commands <- bin.PhaseCommand{Phase: phaseNow, PromTakt: true}
+		case resp := <-responce:
+			if resp.OsStop {
+				fmt.Println("RU OS Stop")
+				ctrlCycle.Stop()
+				ctrlPhase.Stop()
+				continue
 			}
-			if hardware.Cpu.GetDI(setup.Set.Hardware.PinYB) {
-				control.Stop()
-				goto allBlink
+			if resp.YellowBlink {
+				fmt.Println("RU Yellow Blink")
+				ctrlCycle.Stop()
+				ctrlPhase.Stop()
+				continue
 			}
-		case <-changePhase.C:
-			// fmt.Printf("change phase %d\n", ch)
-			ch++
-			changePhase = time.NewTimer(time.Duration(ch) * time.Second)
+			if resp.Ready && resp.Phase == 12 {
+				fmt.Println("All red ready work")
+				ctrlCycle = time.NewTimer(1 * time.Millisecond)
+				continue
+			}
+			if !resp.Ready {
+				fmt.Printf("responce %v\n", resp)
+			}
+
 		}
 
 	}
 
-}
-func osWork() bool {
-	result := false
-	for hardware.Cpu.GetDI(setup.Set.Hardware.PinOS) {
-		result = true
-		zeroOn()
-		time.Sleep(100 * time.Millisecond)
-	}
-	return result
-}
-func allYellowBlink() {
-	for hardware.Cpu.GetDI(setup.Set.Hardware.PinYB) {
-		if osWork() {
-			continue
-		}
-		zeroOn()
-		time.Sleep(500 * time.Millisecond)
-		if osWork() {
-			continue
-		}
-		for _, v := range cmk.TirToNaps {
-			if v.Yellow > 0 {
-				hardware.C8SetOut(v.Yellow, 1)
-			}
-		}
-		time.Sleep(500 * time.Millisecond)
-	}
-	zeroOn()
-}
-func zeroOn() {
-	for i := 0; i < setup.Set.Hardware.C8count; i++ {
-		num := i + 2
-		for j := 1; j < 9; j++ {
-			hardware.C8SetValue(num, j, 0)
-		}
-	}
 }
