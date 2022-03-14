@@ -63,6 +63,7 @@ hardallBlink:
 	oneSecond := time.NewTicker(time.Second)
 	controlPromtakt := time.NewTicker(time.Duration(cmk.StepPromtact) * time.Millisecond)
 	timePhase = -1
+	phaseNow = 0
 	once := false
 	for {
 		select {
@@ -81,18 +82,17 @@ hardallBlink:
 				}
 				p := cmk.PromMake.GetCommads(timeCount)
 				if len(p) != 0 {
-					fmt.Printf("time %4d : ", timeCount)
+					// fmt.Printf("time %4d : ", timeCount)
 					for _, v := range p {
 						hardware.C8SetOut(v.Tir, v.Value)
-						fmt.Printf("%v", v)
+						// fmt.Printf("%v", v)
 					}
-					fmt.Println(".")
+					// fmt.Println(".")
 				}
-				timePhase = -1
 			}
 			if timeCount == 0 {
+				fmt.Println("Prom end")
 				responce <- ResponcePhase{Phase: phaseNow, Ready: true}
-				timePhase = 0
 			}
 			timeCount -= cmk.StepPromtact
 			if timeCount < 0 {
@@ -162,16 +162,19 @@ hardallBlink:
 				}
 				if timeCount > 0 {
 					//Еще идет промтакт посылаем отказ
+					fmt.Println("work prom reject")
 					responce <- ResponcePhase{Phase: 0, Ready: false}
 					continue
 				}
-				if timePhase <= cmk.GetTMin(phaseNow) {
+				if phaseNow != 0 && timePhase < cmk.GetTMin(phaseNow) {
 					//Еще не выбран Тмин текущей фазы
+					fmt.Println("Tmin phase reject")
 					responce <- ResponcePhase{Phase: phaseNow, Ready: false}
 					continue
 				}
 				err := cmk.GetPromtackt(cmd.Phase, cmd.PromTakt)
 				if err != nil {
+					fmt.Println("Error make prom phase reject")
 					responce <- ResponcePhase{Phase: cmd.Phase, Ready: false}
 					continue
 				}
@@ -179,6 +182,8 @@ hardallBlink:
 				once = false
 				phaseNow = cmd.Phase
 				timePhase = 0
+				// fmt.Printf("Start prom %d %d\n", timeCount, phaseNow)
+				// fmt.Printf("%v\n", cmk.PromMake)
 			}
 
 		}

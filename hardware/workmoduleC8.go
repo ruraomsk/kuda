@@ -11,6 +11,10 @@ import (
 
 func (s *ModuleC8) setMasterTCP() error {
 	m := &MasterTcp{hrInternal: make([]uint16, s.size), hr: make([]uint16, s.size)} //549)}
+	for i := 0; i < len(m.hr); i++ {
+		m.hr[i] = 0
+		m.hrInternal[i] = 0
+	}
 	m.master = *modbus.NewTCPClientHandler(s.connect)
 	m.master.SlaveId = byte(s.moduleSlaveID)
 	m.master.Timeout = time.Second
@@ -37,25 +41,15 @@ func (s *ModuleC8) loopTCP() {
 					break internal
 				} else {
 					s.work = true
-					s.mutex.Lock()
-					for i, v := range s.masterTCP.hrInternal {
-						s.masterTCP.hr[i] = v
-					}
-					s.mutex.Unlock()
 				}
 			case wr := <-s.writer:
 				// logger.Debug.Printf("%d %v", s.moduleNumber, wr)
 				//Пришла команда на запись если поле bit <0 то это просто слово
 				if wr.pos.b < 0 {
-					err := s.masterTCP.writeOneHR(wr.pos.w, uint16(wr.value))
-					if err != nil {
-						logger.Error.Printf("write device %d adress %d value %d %s", s.moduleNumber, wr.pos.w, wr.value, err.Error())
-						s.work = false
-						break internal
-					}
+					s.masterTCP.hr[wr.pos.w] = uint16(wr.value)
 					s.work = true
 				} else {
-					r := s.masterTCP.hrInternal[wr.pos.w]
+					r := s.masterTCP.hr[wr.pos.w]
 					c := 1
 					for i := 0; i < wr.pos.b; i++ {
 						c = c << 1
@@ -65,13 +59,7 @@ func (s *ModuleC8) loopTCP() {
 					} else {
 						r = r & (^uint16(c))
 					}
-					err := s.masterTCP.writeOneHR(wr.pos.w, r)
-					if err != nil {
-						logger.Error.Printf("write device %d adress %d value %d %s", s.moduleNumber, wr.pos.w, r, err.Error())
-						s.work = false
-						break internal
-					}
-					s.masterTCP.hrInternal[wr.pos.w] = r
+					s.masterTCP.hr[wr.pos.w] = r
 					s.work = true
 				}
 			}

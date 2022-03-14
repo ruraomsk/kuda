@@ -1,7 +1,5 @@
 package hardware
 
-import "sync"
-
 type ModuleCPU struct {
 	connect       string
 	moduleSlaveID int
@@ -16,8 +14,8 @@ type ModuleCPU struct {
 	ao            map[int]AO
 	masterTCP     *MasterTcp
 	work          bool
-	mutex         sync.Mutex
-	writer        chan writeHR
+	// mutex         sync.Mutex
+	writer chan writeHR
 }
 
 type bs struct {

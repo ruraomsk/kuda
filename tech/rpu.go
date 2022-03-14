@@ -41,8 +41,9 @@ func WorkRPU(c *bin.CMK) {
 		case <-ctrlPhase.C:
 			step++
 			ctrlPhase = time.NewTimer(time.Duration(cmk.RPUs[0].Phases[step].Time) * time.Second)
+			phaseOld := phaseNow
 			phaseNow = cmk.RPUs[0].Phases[step].Phase
-			commands <- bin.PhaseCommand{Phase: phaseNow, PromTakt: true}
+			commands <- bin.PhaseCommand{Phase: phaseNow, PromTakt: cmk.GetBaseOrUniver(phaseOld, phaseNow)}
 		case resp := <-responce:
 			if resp.OsStop {
 				fmt.Println("RU OS Stop")
@@ -61,9 +62,9 @@ func WorkRPU(c *bin.CMK) {
 				ctrlCycle = time.NewTimer(1 * time.Millisecond)
 				continue
 			}
-			if !resp.Ready {
-				fmt.Printf("responce %v\n", resp)
-			}
+			// if !resp.Ready {
+			fmt.Printf("responce %v\n", resp)
+			// }
 
 		}
 

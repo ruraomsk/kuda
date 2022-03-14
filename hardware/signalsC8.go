@@ -1,7 +1,5 @@
 package hardware
 
-import "sync"
-
 type ModuleC8 struct {
 	moduleSlaveID int
 	moduleNumber  int
@@ -13,8 +11,8 @@ type ModuleC8 struct {
 	с8            map[int]C8
 	masterTCP     *MasterTcp
 	work          bool
-	mutex         sync.Mutex
-	writer        chan writeHR
+	// mutex         sync.Mutex
+	writer chan writeHR
 }
 type C8 struct {
 	value   bs //Место хранения значения
