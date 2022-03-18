@@ -21,6 +21,7 @@ type CMK struct {
 	PromMake      PromMake         `json:"-"`            // Созданый промтакт переход
 	PrMapBase     map[int]PromTakt `json:"-"`            // Промтакты базовые кешированные
 	PrMapUn       map[int]PromTakt `json:"-"`            // Промтакты универсальные кешированные
+	Counters      []Counter        `json:"counts"`       // Описаны все выводные счетчики
 
 }
 type NtoPhase struct {
@@ -28,11 +29,20 @@ type NtoPhase struct {
 	Naps     []int `json:"naps"` // Список направлений в фазе
 }
 type TirToNap struct {
-	Number int   `json:"num"`    // Номер направления
-	Type   int   `json:"type"`   // Тип направления 1-Транспортный 2-Поворотный постояный 3-Пешеходный 4-Трамвайный
-	Green  int   `json:"green"`  // Номер зеленого тиристора
-	Yellow int   `json:"yellow"` // Номер желтого тиристора
-	Reds   []int `json:"reds"`   // Красный первый и так далее
+	Number  int   `json:"num"`     // Номер направления
+	Type    int   `json:"type"`    // Тип направления 1-Транспортный 2-Поворотный постояный 3-Пешеходный 4-Трамвайный
+	Green   int   `json:"green"`   // Номер зеленого тиристора
+	Yellow  int   `json:"yellow"`  // Номер желтого тиристора
+	Reds    []int `json:"reds"`    // Красный первый и так далее
+	Counter int   `json:"counter"` // Номер канала для вывода длительности фазы
+}
+type Counter struct {
+	Number   int  `json:"num"`     // Номер выходного счетчика
+	ID       int  `json:"id"`      // Его id на линии связи
+	Type     int  `json:"type"`    // Тип счетчика 0 - необходимо каждую секунду самому делать декремент 1 - не надо
+	Value    int  `json:"-"`       // Текущее значение
+	NeedSend bool `json:"-"`       // Истина если нужно передавать
+	Default  int  `json:"default"` // Значение по умолчанию при запуске
 }
 type TimeToPhase struct {
 	NumPhase int `json:"nphase"` // Номер фазы

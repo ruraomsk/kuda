@@ -21,12 +21,14 @@ import (
 	"github.com/ruraomsk/kuda/tech/bin"
 	"github.com/ruraomsk/kuda/transport"
 	"github.com/ruraomsk/kuda/usb"
+	"github.com/ruraomsk/kuda/vpu"
 )
 
 var (
 	//go:embed config
 	config embed.FS
 )
+var cmk *bin.CMK
 
 func init() {
 	setup.Set = new(setup.Setup)
@@ -35,6 +37,20 @@ func init() {
 		os.Exit(-1)
 		return
 	}
+	buffer, err := config.ReadFile("config/rpu.json")
+	if err != nil {
+		logger.Error.Println(err.Error())
+		fmt.Println(err.Error())
+		os.Exit(-1)
+		return
+	}
+	err = json.Unmarshal(buffer, &cmk)
+	if err != nil {
+		logger.Error.Println(err.Error())
+		os.Exit(-1)
+		return
+	}
+
 	os.MkdirAll(setup.Set.LogPath, 0777)
 	os.MkdirAll(setup.Set.SetupBrams.DbPath, 0777)
 }
@@ -46,6 +62,8 @@ func main() {
 		log.Panic("Error logger system", err.Error())
 		return
 	}
+	fmt.Println("kuda start")
+	logger.Info.Println("kuda start")
 	dbstop := make(chan interface{})
 
 	brams.StartBrams(dbstop)
@@ -55,31 +73,26 @@ func main() {
 		return
 	}
 	hardware.StartHard()
+	vpuC := tech.CreateCommander(2)
+	duC := tech.CreateCommander(3)
+	kuC := tech.CreateCommander(4)
+	cs := make([]*tech.Commander, 0)
+	cs = append(cs, vpuC)
+	cs = append(cs, duC)
+	cs = append(cs, kuC)
+	cmf := make(chan bin.PhaseCommand, 100)
+	go tech.WorkRPU(cmk, cs, cmf)
+	go vpu.StarterVPU(vpuC, cmf)
+	go vpu.StarterDU(duC, cmf)
+	go vpu.StarterKU(kuC, cmf)
+
 	netware.StartNetware()
 	usb.StartUSB()
 	go transport.StartServerExchange("192.168.115.159:2018")
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 
-	fmt.Println("kuda start")
-	logger.Info.Println("kuda start")
 	watch := time.NewTicker(time.Duration(setup.Set.WatchDog.Step) * time.Millisecond)
-	// go tester.C8Tester()
-	//tester.BinTest()
-	buffer, err := config.ReadFile("config/rpu.json")
-	if err != nil {
-		logger.Error.Println(err.Error())
-		fmt.Println(err.Error())
-		return
-	}
-	var cmk bin.CMK
-	err = json.Unmarshal(buffer, &cmk)
-	if err != nil {
-		logger.Error.Println(err.Error())
-		return
-	}
-
-	go tech.WorkRPU(&cmk)
 
 loop:
 	for {

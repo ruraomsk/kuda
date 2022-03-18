@@ -5,7 +5,7 @@ import "fmt"
 //GetPromtackt вычисляет переходной промтакт на фазу phase.prom истина если используется базовый промтакт
 //	naps текущее состояние направлений Истина если открыто. На выходе изменяем состояние направлений и выдаем
 //  план перехода  промтакта который нужно отработать и ошибку
-func (c *CMK) GetPromtackt(phase int, prom bool) error {
+func (c *CMK) GetPromtackt(phase int, prom bool, longtime int) error {
 	//Вначале проверим есть ли такая фаза?
 	found := false
 	descPhase := c.NtoPhases[0]
@@ -39,7 +39,7 @@ func (c *CMK) GetPromtackt(phase int, prom bool) error {
 	c.PromMake.new()
 	for _, v := range c.TirToNaps {
 		fmt.Printf("nap :%d ", v.Number)
-		res := v.makeProm(c.Naps[v.Number], newNaps[v.Number], pr[v.Number])
+		res := v.makeProm(c.Naps[v.Number], newNaps[v.Number], pr[v.Number], longtime)
 		for t, k := range res.Ticks {
 			for _, l := range k {
 				c.PromMake.add(t, l)
@@ -52,7 +52,7 @@ func (c *CMK) GetPromtackt(phase int, prom bool) error {
 	}
 	return nil
 }
-func (tm *TirToNap) makeProm(olds bool, news bool, pr PromTakt) PromMake {
+func (tm *TirToNap) makeProm(olds bool, news bool, pr PromTakt, longtime int) PromMake {
 	res := new(PromMake)
 	res.new()
 	if olds == news {
@@ -87,7 +87,9 @@ func (tm *TirToNap) makeProm(olds bool, news bool, pr PromTakt) PromMake {
 					res.add(pr.Red*1000, Command{Tir: v, Value: 1})
 				}
 			}
+			if longtime != 0 {
 
+			}
 		} else {
 			fmt.Print("open ")
 			//Нужно открыть направление Кр КрЖ З

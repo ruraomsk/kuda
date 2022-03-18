@@ -12,10 +12,13 @@ import (
 //StartMechanics основной исполнитель
 
 type PhaseCommand struct {
+	Level    int
 	Phase    int
 	PromTakt bool //Истина если используется базовый промтакт
+	LongTime int  //Длительность фазы общая или 0 не выводить или 999 значит писать АУ
 }
 type ResponcePhase struct {
+	Level       int
 	Phase       int //Номер исполняемой фазы
 	Ready       bool
 	OsStop      bool // Истина если включен режим РУ ОС
@@ -54,7 +57,7 @@ hardallBlink:
 	hardAllYellowBlink()
 	writeValues(cmk.SetAllRed())
 	time.Sleep(time.Duration(time.Duration(setup.Set.Hardware.LongKK) * time.Second))
-	responce <- ResponcePhase{Phase: 12, Ready: true}
+	responce <- ResponcePhase{Level: 1, Phase: 12, Ready: true}
 	//Все направления выключены
 	cmk.SetAllNapsStop()
 	timeCount = -cmk.StepPromtact
@@ -65,11 +68,15 @@ hardallBlink:
 	timePhase = -1
 	phaseNow = 0
 	once := false
+	level := 0
+	counterStart()
+
 	for {
 		select {
 		case <-oneSecond.C:
 			if timePhase >= 0 {
 				timePhase++
+				oneStepCounters()
 				if timePhase > (math.MaxInt - 10) {
 					timePhase = 0
 				}
@@ -77,7 +84,7 @@ hardallBlink:
 		case <-controlPromtakt.C:
 			if timeCount >= 0 {
 				if !once {
-					responce <- ResponcePhase{Phase: 0, Ready: true}
+					responce <- ResponcePhase{Level: level, Phase: 9, Ready: true}
 					once = true
 				}
 				p := cmk.PromMake.GetCommads(timeCount)
@@ -92,7 +99,7 @@ hardallBlink:
 			}
 			if timeCount == 0 {
 				fmt.Println("Prom end")
-				responce <- ResponcePhase{Phase: phaseNow, Ready: true}
+				responce <- ResponcePhase{Level: level, Phase: phaseNow, Ready: true}
 			}
 			timeCount -= cmk.StepPromtact
 			if timeCount < 0 {
@@ -103,8 +110,9 @@ hardallBlink:
 			switch phaseNow {
 			case 10:
 				if !once {
-					responce <- ResponcePhase{Phase: 10, Ready: true}
+					responce <- ResponcePhase{Level: level, Phase: 10, Ready: true}
 					once = true
+					resetCounters()
 				}
 				if YellowOnOrOff {
 					writeValues(cmk.SetAllYellowOn())
@@ -114,15 +122,17 @@ hardallBlink:
 				YellowOnOrOff = !YellowOnOrOff
 			case 11:
 				if !once {
-					responce <- ResponcePhase{Phase: 11, Ready: true}
+					resetCounters()
+					responce <- ResponcePhase{Level: level, Phase: 11, Ready: true}
 					once = true
 					writeValues(cmk.SetAllOff())
 				}
 			case 12:
 				if !once {
+					resetCounters()
 					writeValues(cmk.SetAllRed())
 					time.Sleep(time.Duration(time.Duration(setup.Set.Hardware.LongKK) * time.Second))
-					responce <- ResponcePhase{Phase: 12, Ready: true}
+					responce <- ResponcePhase{Level: level, Phase: 12, Ready: true}
 					once = true
 				}
 			}
@@ -136,46 +146,74 @@ hardallBlink:
 				goto hardallBlink
 			}
 		case cmd := <-inPhaseCommand:
-			fmt.Printf("command %v\n", cmd)
+			level = cmd.Level
+			// fmt.Printf("command %v\n", cmd)
 			switch cmd.Phase {
 			case 10:
+				if phaseNow == 10 {
+					responce <- ResponcePhase{Level: level, Phase: phaseNow, Ready: true}
+					continue
+				}
+				resetCounters()
 				YellowOnOrOff = true
 				phaseNow = 10
 				once = false
+				timeCount = -cmk.StepPromtact
+				cmk.SetAllNapsStop()
 			case 11:
+				if phaseNow == 11 {
+					responce <- ResponcePhase{Level: level, Phase: phaseNow, Ready: true}
+					continue
+				}
+				resetCounters()
 				phaseNow = 11
 				once = false
+				timeCount = -cmk.StepPromtact
+				cmk.SetAllNapsStop()
 			case 12:
+				if phaseNow == 12 {
+					responce <- ResponcePhase{Level: level, Phase: phaseNow, Ready: true}
+					continue
+				}
+				resetCounters()
 				phaseNow = 12
 				once = false
 				//Все направления выключены
+				timeCount = -cmk.StepPromtact
 				cmk.SetAllNapsStop()
 
 			default:
 				if phaseNow == 10 || phaseNow == 11 {
 					writeValues(cmk.SetAllRed())
 					time.Sleep(time.Duration(time.Duration(setup.Set.Hardware.LongKK) * time.Second))
-					responce <- ResponcePhase{Phase: 12, Ready: true}
+					responce <- ResponcePhase{Level: level, Phase: 12, Ready: true}
 					//Все направления выключены
-					cmk.SetAllNapsStop()
+					timeCount = -cmk.StepPromtact
+				}
+				if cmd.Phase == phaseNow {
+					//Нечего делать
+					// time.Sleep(time.Second)
+					responce <- ResponcePhase{Level: level, Phase: phaseNow, Ready: true}
 					continue
 				}
+
 				if timeCount > 0 {
 					//Еще идет промтакт посылаем отказ
-					fmt.Println("work prom reject")
-					responce <- ResponcePhase{Phase: 0, Ready: false}
+					fmt.Printf("work prom reject %d\n", timeCount)
+					responce <- ResponcePhase{Level: level, Phase: 9, Ready: false}
 					continue
 				}
 				if phaseNow != 0 && timePhase < cmk.GetTMin(phaseNow) {
 					//Еще не выбран Тмин текущей фазы
 					fmt.Println("Tmin phase reject")
-					responce <- ResponcePhase{Phase: phaseNow, Ready: false}
+					responce <- ResponcePhase{Level: level, Phase: phaseNow, Ready: false}
 					continue
 				}
-				err := cmk.GetPromtackt(cmd.Phase, cmd.PromTakt)
+
+				err := cmk.GetPromtackt(cmd.Phase, cmd.PromTakt, cmd.LongTime)
 				if err != nil {
-					fmt.Println("Error make prom phase reject")
-					responce <- ResponcePhase{Phase: cmd.Phase, Ready: false}
+					fmt.Printf("Error make prom phase %d %s\n", cmd.Phase, err.Error())
+					responce <- ResponcePhase{Level: level, Phase: cmd.Phase, Ready: false}
 					continue
 				}
 				timeCount = cmk.PromMake.GetMaxTime()
@@ -203,7 +241,7 @@ func hardOsWork() bool {
 	for hardware.Cpu.GetDI(setup.Set.Hardware.PinOS) {
 		if !once {
 			once = true
-			responce <- ResponcePhase{OsStop: true}
+			responce <- ResponcePhase{Level: 1, OsStop: true}
 		}
 		result = true
 		zeroOn()
@@ -217,7 +255,7 @@ func hardAllYellowBlink() {
 	for hardware.Cpu.GetDI(setup.Set.Hardware.PinYB) {
 		if !once {
 			once = true
-			responce <- ResponcePhase{YellowBlink: true}
+			responce <- ResponcePhase{Level: 1, YellowBlink: true}
 		}
 		if hardOsWork() {
 			continue

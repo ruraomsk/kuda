@@ -56,7 +56,7 @@ func (c *CMK) GetTMin(phase int) int {
 			return v.Tmin
 		}
 	}
-	return 20
+	return 0
 }
 func (p *PromMake) new() {
 	p.Ticks = make(map[int][]Command)
