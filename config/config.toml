@@ -6,7 +6,7 @@ logpath="log/"
 	step=1
 [hardware]
 	step=100		#цикл опроса датчиков миллисекунд
-	connect="192.168.115.159"
+	connect="127.0.0.1"
 	sport=5000
 	count=3
 	longkk=3		#Длительность кругом красный
@@ -17,5 +17,9 @@ logpath="log/"
 [rtc]
 [vpu]
 	step=100		#цикл опроса  миллисекунд
-	connect="192.168.115.159"
+	connect="127.0.0.1"
 	sport=5010
+[counter]
+	step=100		#цикл опроса  миллисекунд
+	connect="127.0.0.1"
+	sport=5011

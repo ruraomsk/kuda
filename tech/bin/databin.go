@@ -22,7 +22,6 @@ type CMK struct {
 	PrMapBase     map[int]PromTakt `json:"-"`            // Промтакты базовые кешированные
 	PrMapUn       map[int]PromTakt `json:"-"`            // Промтакты универсальные кешированные
 	Counters      []Counter        `json:"counts"`       // Описаны все выводные счетчики
-
 }
 type NtoPhase struct {
 	NumPhase int   `json:"nph"`  // Номер фазы
@@ -37,12 +36,10 @@ type TirToNap struct {
 	Counter int   `json:"counter"` // Номер канала для вывода длительности фазы
 }
 type Counter struct {
-	Number   int  `json:"num"`     // Номер выходного счетчика
-	ID       int  `json:"id"`      // Его id на линии связи
-	Type     int  `json:"type"`    // Тип счетчика 0 - необходимо каждую секунду самому делать декремент 1 - не надо
-	Value    int  `json:"-"`       // Текущее значение
-	NeedSend bool `json:"-"`       // Истина если нужно передавать
-	Default  int  `json:"default"` // Значение по умолчанию при запуске
+	Number int    `json:"num"` // Номер выходного счетчика
+	ID     int    `json:"id"`  // Его id на линии связи
+	Value  int    `json:"-"`   // Текущее значение
+	Color  string `json:"-"`   //Какого цвета индикатор
 }
 type TimeToPhase struct {
 	NumPhase int `json:"nphase"` // Номер фазы

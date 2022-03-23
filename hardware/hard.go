@@ -2,10 +2,12 @@ package hardware
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/ruraomsk/ag-server/logger"
 	"github.com/ruraomsk/ag-server/pudge"
 	"github.com/ruraomsk/kuda/brams"
+	"github.com/ruraomsk/kuda/hardware/slaves"
 	"github.com/ruraomsk/kuda/setup"
 	"github.com/ruraomsk/kuda/status"
 )
@@ -21,6 +23,11 @@ func AllReady() bool {
 	return Cpu.IsWork()
 }
 func StartHard() {
+	//Стартуем имитаторами
+	go slaves.StartDeviceC8()
+	go slaves.StartVPU()
+	go slaves.StartCounter()
+	time.Sleep(5 * time.Second)
 	MapC8 = make(map[int]*ModuleC8)
 	go workModuleCPU()
 	port := setup.Set.Hardware.SPort

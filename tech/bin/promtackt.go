@@ -5,7 +5,7 @@ import "fmt"
 //GetPromtackt вычисляет переходной промтакт на фазу phase.prom истина если используется базовый промтакт
 //	naps текущее состояние направлений Истина если открыто. На выходе изменяем состояние направлений и выдаем
 //  план перехода  промтакта который нужно отработать и ошибку
-func (c *CMK) GetPromtackt(phase int, prom bool, longtime int) error {
+func (c *CMK) GetPromtackt(phase int, prom bool) error {
 	//Вначале проверим есть ли такая фаза?
 	found := false
 	descPhase := c.NtoPhases[0]
@@ -35,24 +35,24 @@ func (c *CMK) GetPromtackt(phase int, prom bool, longtime int) error {
 	for _, v := range descPhase.Naps {
 		newNaps[v] = true
 	}
-	// fmt.Printf("new %v\nold %v\n", newNaps, c.Naps)
+	fmt.Printf("phase %d\nold %v\nnew %v\n", phase, c.Naps, newNaps)
 	c.PromMake.new()
 	for _, v := range c.TirToNaps {
-		fmt.Printf("nap :%d ", v.Number)
-		res := v.makeProm(c.Naps[v.Number], newNaps[v.Number], pr[v.Number], longtime)
+		// fmt.Printf("nap :%d ", v.Number)
+		res := v.makeProm(c.Naps[v.Number], newNaps[v.Number], pr[v.Number])
 		for t, k := range res.Ticks {
 			for _, l := range k {
 				c.PromMake.add(t, l)
 			}
 		}
-		fmt.Println(".")
+		// fmt.Println(".")
 	}
 	for n, v := range newNaps {
 		c.Naps[n] = v
 	}
 	return nil
 }
-func (tm *TirToNap) makeProm(olds bool, news bool, pr PromTakt, longtime int) PromMake {
+func (tm *TirToNap) makeProm(olds bool, news bool, pr PromTakt) PromMake {
 	res := new(PromMake)
 	res.new()
 	if olds == news {
@@ -61,47 +61,44 @@ func (tm *TirToNap) makeProm(olds bool, news bool, pr PromTakt, longtime int) Pr
 	}
 	switch tm.Type {
 	case 1: //Транспортное направление
-		fmt.Print("1 tr ")
+		// fmt.Print("1 tr ")
 		if olds {
-			fmt.Print("close ")
+			// fmt.Print("close ")
 			//Нужно закрыть направление Зм Ж Кр
 			if pr.GreenBlink > pr.Yellow {
 				//Записываем зеленое мигание до желтого
-				fmt.Printf("%d GB ", pr.GreenBlink)
+				// fmt.Printf("%d GB ", pr.GreenBlink)
 				for i := pr.GreenBlink; i > pr.Yellow; i-- {
 					res.add(i*1000, Command{Tir: tm.Green, Value: 0})
 					res.add(i*1000-500, Command{Tir: tm.Green, Value: 1})
 				}
 			}
 			if pr.Yellow > pr.Red {
-				fmt.Printf("%d YE ", pr.Yellow)
+				// fmt.Printf("%d YE ", pr.Yellow)
 
 				res.add(pr.Yellow*1000, Command{Tir: tm.Green, Value: 0})
 				res.add(pr.Yellow*1000, Command{Tir: tm.Yellow, Value: 1})
 			}
 			if pr.Red >= 0 {
-				fmt.Printf("%d RD ", pr.Red)
+				// fmt.Printf("%d RD ", pr.Red)
 				res.add(0, Command{Tir: tm.Green, Value: 0})
 				res.add(pr.Red*1000, Command{Tir: tm.Yellow, Value: 0})
 				for _, v := range tm.Reds {
 					res.add(pr.Red*1000, Command{Tir: v, Value: 1})
 				}
 			}
-			if longtime != 0 {
-
-			}
 		} else {
-			fmt.Print("open ")
+			// fmt.Print("open ")
 			//Нужно открыть направление Кр КрЖ З
 			if pr.RedYellow != 0 && pr.RedYellow > pr.GreenDop {
-				fmt.Printf("%d RE ", pr.RedYellow)
+				// fmt.Printf("%d RE ", pr.RedYellow)
 				res.add(pr.RedYellow*1000, Command{Tir: tm.Yellow, Value: 1})
 				for _, v := range tm.Reds {
 					res.add(pr.Red*1000, Command{Tir: v, Value: 1})
 				}
 			}
 			if pr.GreenDop > 0 {
-				fmt.Printf("%d GD ", pr.GreenDop)
+				// fmt.Printf("%d GD ", pr.GreenDop)
 
 				res.add(pr.GreenDop*1000, Command{Tir: tm.Yellow, Value: 0})
 				res.add(pr.GreenDop*1000, Command{Tir: tm.Green, Value: 1})
@@ -111,7 +108,7 @@ func (tm *TirToNap) makeProm(olds bool, news bool, pr PromTakt, longtime int) Pr
 
 			} else {
 				//Финалочка
-				fmt.Printf("%d GR ", 0)
+				// fmt.Printf("%d GR ", 0)
 				res.add(0, Command{Tir: tm.Yellow, Value: 0})
 				res.add(0, Command{Tir: tm.Green, Value: 1})
 				for _, v := range tm.Reds {
@@ -120,12 +117,12 @@ func (tm *TirToNap) makeProm(olds bool, news bool, pr PromTakt, longtime int) Pr
 			}
 		}
 	case 2: //Поворотное направление
-		fmt.Print("2 ro ")
+		// fmt.Print("2 ro ")
 		if olds {
-			fmt.Print("close ")
+			// fmt.Print("close ")
 			//Нужно закрыть направление Зм Ж Кр
 			if pr.GreenBlink > pr.Yellow {
-				fmt.Printf("%d GB ", pr.GreenBlink)
+				// fmt.Printf("%d GB ", pr.GreenBlink)
 				//Записываем зеленое мигание до желтого
 				for i := pr.GreenBlink; i > pr.Yellow; i-- {
 					res.add(i*1000, Command{Tir: tm.Green, Value: 0})
@@ -136,11 +133,11 @@ func (tm *TirToNap) makeProm(olds bool, news bool, pr PromTakt, longtime int) Pr
 				res.add(pr.Yellow*1000, Command{Tir: tm.Green, Value: 0})
 			}
 			if pr.Red >= 0 {
-				fmt.Printf("%d RD ", pr.Red)
+				// fmt.Printf("%d RD ", pr.Red)
 				res.add(pr.Red*1000, Command{Tir: tm.Green, Value: 0})
 			}
 		} else {
-			fmt.Print("open ")
+			// fmt.Print("open ")
 			//Нужно открыть направление Кр КрЖ З
 			// if pr.RedYellow != 0 && pr.RedYellow > pr.GreenDop {
 			// 	// res.add(pr.RedYellow*1000, Command{Tir: tm.Yellow, Value: 1})
@@ -149,29 +146,29 @@ func (tm *TirToNap) makeProm(olds bool, news bool, pr PromTakt, longtime int) Pr
 			// 	// }
 			// }
 			if pr.GreenDop >= 0 {
-				fmt.Printf("%d GB ", pr.GreenDop)
+				// fmt.Printf("%d GB ", pr.GreenDop)
 				res.add(pr.GreenDop*1000, Command{Tir: tm.Green, Value: 1})
 			}
 		}
 	case 3: // Пешеходное направление
-		fmt.Print("3 st ")
+		// fmt.Print("3 st ")
 		if olds {
-			fmt.Print("close ")
+			// fmt.Print("close ")
 			//Нужно закрыть направление Зм Ж Кр
 			if pr.GreenBlink > pr.Yellow {
 				//Записываем зеленое мигание до желтого
-				fmt.Printf("%d GB ", pr.GreenBlink)
+				// fmt.Printf("%d GB ", pr.GreenBlink)
 				for i := pr.GreenBlink; i > pr.Yellow; i-- {
 					res.add(i*1000, Command{Tir: tm.Green, Value: 0})
 					res.add(i*1000-500, Command{Tir: tm.Green, Value: 1})
 				}
 			}
 			if pr.Yellow > pr.Red {
-				fmt.Printf("%d YE ", pr.Yellow)
+				// fmt.Printf("%d YE ", pr.Yellow)
 				res.add(pr.Yellow*1000, Command{Tir: tm.Green, Value: 0})
 			}
 			if pr.Red >= 0 {
-				fmt.Printf("%d RD ", pr.Red)
+				// fmt.Printf("%d RD ", pr.Red)
 				res.add(pr.Red*1000, Command{Tir: tm.Green, Value: 0})
 				for _, v := range tm.Reds {
 					res.add(pr.Red*1000, Command{Tir: v, Value: 1})
@@ -179,7 +176,7 @@ func (tm *TirToNap) makeProm(olds bool, news bool, pr PromTakt, longtime int) Pr
 			}
 
 		} else {
-			fmt.Print("open ")
+			// fmt.Print("open ")
 			//Нужно открыть направление Кр КрЖ З
 			// if pr.RedYellow != 0 && pr.RedYellow > pr.GreenDop {
 			// 	// res.add(pr.RedYellow*1000, Command{Tir: tm.Yellow, Value: 1})
@@ -188,7 +185,7 @@ func (tm *TirToNap) makeProm(olds bool, news bool, pr PromTakt, longtime int) Pr
 			// 	// }
 			// }
 			if pr.GreenDop >= 0 {
-				fmt.Printf("%d GD ", pr.GreenDop)
+				// fmt.Printf("%d GD ", pr.GreenDop)
 				res.add(pr.GreenDop*1000, Command{Tir: tm.Green, Value: 1})
 				for _, v := range tm.Reds {
 					res.add(pr.GreenDop*1000, Command{Tir: v, Value: 0})

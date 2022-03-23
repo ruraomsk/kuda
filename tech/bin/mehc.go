@@ -33,6 +33,7 @@ var (
 	YellowOnOrOff  bool
 	inPhaseCommand chan PhaseCommand
 	responce       chan ResponcePhase
+	StartCycle     int
 )
 
 func StartMechanics(c *CMK, phase chan PhaseCommand) (chan ResponcePhase, error) {
@@ -65,18 +66,21 @@ hardallBlink:
 	allHalfSecond := time.NewTicker(500 * time.Millisecond)
 	oneSecond := time.NewTicker(time.Second)
 	controlPromtakt := time.NewTicker(time.Duration(cmk.StepPromtact) * time.Millisecond)
+	controlCounter := time.NewTicker(time.Duration(cmk.StepPromtact) * time.Millisecond)
 	timePhase = -1
 	phaseNow = 0
 	once := false
 	level := 0
 	counterStart()
-
+	StartCycle = 0
+	timePromtakt := 0
 	for {
 		select {
+		case <-controlCounter.C:
+			oneStepCounters()
 		case <-oneSecond.C:
 			if timePhase >= 0 {
 				timePhase++
-				oneStepCounters()
 				if timePhase > (math.MaxInt - 10) {
 					timePhase = 0
 				}
@@ -89,16 +93,17 @@ hardallBlink:
 				}
 				p := cmk.PromMake.GetCommads(timeCount)
 				if len(p) != 0 {
-					// fmt.Printf("time %4d : ", timeCount)
+					fmt.Printf("time %5d : ", TimeNowOfSecond()-StartCycle)
 					for _, v := range p {
 						hardware.C8SetOut(v.Tir, v.Value)
-						// fmt.Printf("%v", v)
+						fmt.Printf(" tir %v", v)
 					}
-					// fmt.Println(".")
+					fmt.Println(".")
 				}
 			}
 			if timeCount == 0 {
-				fmt.Println("Prom end")
+				fmt.Printf("time %5d Prom end\n", TimeNowOfSecond()-StartCycle)
+				timePhase = timePromtakt
 				responce <- ResponcePhase{Level: level, Phase: phaseNow, Ready: true}
 			}
 			timeCount -= cmk.StepPromtact
@@ -130,6 +135,7 @@ hardallBlink:
 			case 12:
 				if !once {
 					resetCounters()
+					cmk.SetAllNapsStop()
 					writeValues(cmk.SetAllRed())
 					time.Sleep(time.Duration(time.Duration(setup.Set.Hardware.LongKK) * time.Second))
 					responce <- ResponcePhase{Level: level, Phase: 12, Ready: true}
@@ -157,6 +163,7 @@ hardallBlink:
 				resetCounters()
 				YellowOnOrOff = true
 				phaseNow = 10
+				timePhase = 0
 				once = false
 				timeCount = -cmk.StepPromtact
 				cmk.SetAllNapsStop()
@@ -167,6 +174,7 @@ hardallBlink:
 				}
 				resetCounters()
 				phaseNow = 11
+				timePhase = 0
 				once = false
 				timeCount = -cmk.StepPromtact
 				cmk.SetAllNapsStop()
@@ -176,6 +184,7 @@ hardallBlink:
 					continue
 				}
 				resetCounters()
+				timePhase = 0
 				phaseNow = 12
 				once = false
 				//Все направления выключены
@@ -188,7 +197,15 @@ hardallBlink:
 					time.Sleep(time.Duration(time.Duration(setup.Set.Hardware.LongKK) * time.Second))
 					responce <- ResponcePhase{Level: level, Phase: 12, Ready: true}
 					//Все направления выключены
+					cmk.SetAllNapsStop()
+					timePhase = 0
 					timeCount = -cmk.StepPromtact
+				}
+				if timeCount > 0 {
+					//Еще идет промтакт посылаем отказ
+					// fmt.Printf("work prom reject %d to phase %d now %d\n", timeCount/1000, cmd.Phase, phaseNow)
+					responce <- ResponcePhase{Level: level, Phase: 9, Ready: false}
+					continue
 				}
 				if cmd.Phase == phaseNow {
 					//Нечего делать
@@ -197,29 +214,36 @@ hardallBlink:
 					continue
 				}
 
-				if timeCount > 0 {
-					//Еще идет промтакт посылаем отказ
-					fmt.Printf("work prom reject %d\n", timeCount)
-					responce <- ResponcePhase{Level: level, Phase: 9, Ready: false}
-					continue
-				}
 				if phaseNow != 0 && timePhase < cmk.GetTMin(phaseNow) {
 					//Еще не выбран Тмин текущей фазы
-					fmt.Println("Tmin phase reject")
+					// fmt.Println("Tmin phase reject")
 					responce <- ResponcePhase{Level: level, Phase: phaseNow, Ready: false}
 					continue
 				}
-
-				err := cmk.GetPromtackt(cmd.Phase, cmd.PromTakt, cmd.LongTime)
+				// resetCounters()
+				err := cmk.GetPromtackt(cmd.Phase, cmd.PromTakt)
 				if err != nil {
 					fmt.Printf("Error make prom phase %d %s\n", cmd.Phase, err.Error())
 					responce <- ResponcePhase{Level: level, Phase: cmd.Phase, Ready: false}
 					continue
 				}
+
 				timeCount = cmk.PromMake.GetMaxTime()
+				timePromtakt = timeCount / 1000
+				// if cmd.LongTime != 0 {
+				// 	// for _, v := range cmk.TirToNaps {
+				// 	// 	if v.Counter != 0 {
+				// 	// 		if cmd.LongTime != AU {
+				// 	// 			setCounter(v.Counter, cmd.LongTime-timePromtakt)
+				// 	// 		} else {
+				// 	// 			setCounter(v.Counter, AU)
+				// 	// 		}
+				// 	// 	}
+				// 	// }
+				// }
 				once = false
 				phaseNow = cmd.Phase
-				timePhase = 0
+				timePhase = -1
 				// fmt.Printf("Start prom %d %d\n", timeCount, phaseNow)
 				// fmt.Printf("%v\n", cmk.PromMake)
 			}
@@ -241,6 +265,7 @@ func hardOsWork() bool {
 	for hardware.Cpu.GetDI(setup.Set.Hardware.PinOS) {
 		if !once {
 			once = true
+			resetCounters()
 			responce <- ResponcePhase{Level: 1, OsStop: true}
 		}
 		result = true
@@ -255,6 +280,7 @@ func hardAllYellowBlink() {
 	for hardware.Cpu.GetDI(setup.Set.Hardware.PinYB) {
 		if !once {
 			once = true
+			resetCounters()
 			responce <- ResponcePhase{Level: 1, YellowBlink: true}
 		}
 		if hardOsWork() {
